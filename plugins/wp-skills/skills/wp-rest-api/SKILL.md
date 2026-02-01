@@ -289,11 +289,22 @@ Every route MUST have a `permission_callback`. Omitting it triggers a `_doing_it
 - Public read endpoints: use `'permission_callback' => '__return_true'`.
 - Write endpoints: NEVER use `__return_true`. Always check capabilities.
 - Use `current_user_can()` for capability checks, not just "is logged in".
+- **Hide sensitive endpoints** from the REST index with `'show_in_index' => false` — prevents API keys, tokens, or admin data from being discoverable via `GET /wp-json/`.
 
 ```php
 'permission_callback' => function ( $request ) {
     return current_user_can( 'edit_post', $request['id'] );
 },
+
+// Sensitive admin endpoint — hide from /wp-json/ discovery.
+register_rest_route( 'myplugin/v1', '/admin/config', [
+    'methods'             => 'POST',
+    'callback'            => 'myplugin_admin_config',
+    'permission_callback' => function () {
+        return current_user_can( 'manage_options' );
+    },
+    'show_in_index'       => false,  // Not listed in /wp-json/ index.
+] );
 ```
 
 ### Authentication methods

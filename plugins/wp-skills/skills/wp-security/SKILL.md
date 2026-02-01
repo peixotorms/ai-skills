@@ -110,6 +110,14 @@ Nonces prevent cross-site request forgery. They do NOT replace authorization che
 - Nonce field names should be unique per action (e.g., `my_plugin_save_nonce`).
 - Always pair with `current_user_can()`.
 
+### Edge Cases
+
+- **Return values**: `wp_verify_nonce()` returns `1` (generated 0–12 hours ago), `2` (12–24 hours ago), or `false` (invalid/expired). Both `1` and `2` are truthy.
+- **Reusable**: WordPress nonces are NOT true one-time tokens — the same nonce can be used multiple times within its 12–24 hour window.
+- **Session-tied**: Nonces are tied to the user session. If a user logs out, all their nonces become invalid — forms left open in another tab will fail.
+- **Caching conflicts**: Full-page caching can serve stale nonces to users. Use AJAX nonce refresh or fragment caching for forms on cached pages.
+- **NOT authorization**: A valid nonce proves the request came from your site, not that the user is allowed to perform the action. Always combine with `current_user_can()`.
+
 ```php
 // BAD: processing form without nonce
 if ( isset( $_POST['title'] ) ) {
@@ -235,6 +243,31 @@ $results = $wpdb->get_results(
         $like
     )
 );
+```
+
+### Common `prepare()` Mistakes
+
+```php
+// ❌ Table name in placeholder — adds quotes around table name, breaks query.
+$wpdb->prepare( "SELECT * FROM %s WHERE id = %d", $wpdb->prefix . 'my_table', $id );
+// Result: SELECT * FROM 'wp_my_table' WHERE id = 1  ← quoted table name fails
+
+// ✅ Interpolate table name directly, prepare only values.
+$table = $wpdb->prefix . 'my_table';
+$wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ) );
+// Or use %i (WP 6.2+): $wpdb->prepare( "SELECT * FROM %i WHERE id = %d", $table, $id );
+
+// ❌ prepare() with no placeholders — triggers error.
+$wpdb->prepare( "SELECT * FROM {$wpdb->posts}" );
+
+// ✅ Don't use prepare() if there's no dynamic data.
+$wpdb->get_results( "SELECT * FROM {$wpdb->posts}" );
+
+// ❌ Mixing individual args and array.
+$wpdb->prepare( "WHERE id = %d AND name = %s", $id, array( $name ) );
+
+// ✅ Pick one format.
+$wpdb->prepare( "WHERE id = %d AND name = %s", $id, $name );
 ```
 
 ### Convenience Methods (auto-escape values)

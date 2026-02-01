@@ -760,6 +760,53 @@ cd svn-repo && svn add --force trunk/ && svn cp trunk tags/1.0.0
 svn ci -m "Release 1.0.0"
 ```
 
+### GitHub Auto-Updates (Plugin Update Checker)
+
+For plugins distributed outside WordPress.org, use
+[YahnisElsts/plugin-update-checker](https://github.com/YahnisElsts/plugin-update-checker):
+
+```php
+require_once __DIR__ . '/vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+$update_checker = PucFactory::buildUpdateChecker(
+    'https://github.com/your-org/your-plugin/',
+    __FILE__,
+    'your-plugin-slug'
+);
+// Optional: set the branch for stable releases.
+$update_checker->setBranch( 'main' );
+// Optional: use release assets instead of source ZIP.
+$update_checker->getVcsApi()->enableReleaseAssets();
+```
+
+Create GitHub releases with a ZIP asset for each version. The checker polls
+GitHub's API and surfaces updates through WordPress's native update UI.
+
+**GitHub Actions release workflow:**
+
+```yaml
+# .github/workflows/release.yml
+on:
+  push:
+    tags: ['v*']
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: composer install --no-dev --optimize-autoloader
+      - run: npx wp-scripts build  # if JS/CSS build needed
+      - name: Create release ZIP
+        run: |
+          mkdir -p dist
+          rsync -av --exclude-from=.distignore ./ dist/your-plugin/
+          cd dist && zip -r ../your-plugin.zip your-plugin/
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: your-plugin.zip
+```
+
 ---
 
 ## 11. Security Checklist
@@ -772,7 +819,37 @@ svn ci -m "Release 1.0.0"
 
 ---
 
-## 12. Common Mistakes
+## 12. WordPress 6.7–6.9 Breaking Changes
+
+### WP 6.7 — Translation Loading
+
+`load_plugin_textdomain()` is auto-called for plugins with a `Text Domain` header.
+If you call it manually from `init`, it may load before the preferred translation
+source (language packs). Move manual calls to `after_setup_theme` or remove them
+entirely if the header is set.
+
+### WP 6.8 — Bcrypt Password Hashing
+
+WordPress 6.8 migrates from phpass MD5 to bcrypt (`password_hash()`). Existing
+hashes upgrade transparently on next login. **Impact on plugins:**
+
+- `wp_check_password()` / `wp_hash_password()` still work — use these, never
+  hash passwords manually.
+- Plugins that store or compare raw `$hash` strings from the `user_pass` column
+  will break if they assume `$P$` prefix.
+- Custom authentication that bypasses `wp_check_password()` must handle both
+  `$P$` (legacy) and `$2y$` (bcrypt) prefixes.
+
+### WP 6.9 — Abilities API & WP_Dependencies Deprecation
+
+- `WP_Dependencies` class is deprecated. Use `wp_enqueue_script()` /
+  `wp_enqueue_style()` — never instantiate `WP_Dependencies` directly.
+- Abilities API (`register_ability()`) replaces ad-hoc `current_user_can()` for
+  REST route permissions (see wp-rest-api skill).
+
+---
+
+## 13. Common Mistakes
 
 | Mistake | Why It Fails | Fix |
 |---------|-------------|-----|

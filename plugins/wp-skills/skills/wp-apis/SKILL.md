@@ -959,3 +959,6 @@ Rules: prefix all hook names, document with `@since`/`@param`, pass enough conte
 | Using `get_option()` for theme-specific settings | Use `get_theme_mod()` — values travel with the theme |
 | Modifying `$post` global without reset | Always call `wp_reset_postdata()` after custom loops |
 | Hardcoding image sizes in `srcset` | Use `wp_calculate_image_srcset` filter instead |
+| CPT slug matches a page slug | Individual CPT posts 404 — use a different rewrite slug or rename the page |
+| `add_action('save_post', $fn)` but handler expects 3 args | Default is 1 arg — pass `10, 3` to receive `($post_id, $post, $update)` |
+| Filters that `echo` instead of `return` | Filter callbacks MUST return the modified value; echoing corrupts output |
