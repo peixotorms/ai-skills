@@ -218,58 +218,7 @@ Never interpolate variables into SQL strings. Use `$wpdb->prepare()` with placeh
 - Literal `%` in LIKE queries must be escaped as `%%`. Pass SQL wildcards via replacement parameters and use `$wpdb->esc_like()`.
 - Direct database calls should be accompanied by `wp_cache_get()` / `wp_cache_set()` for cacheable queries.
 
-```php
-// BAD: interpolated variable
-$results = $wpdb->get_results( "SELECT * FROM $wpdb->posts WHERE post_author = $user_id" );
-
-// BAD: quoted placeholder
-$wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE ID = '%d'", $id );
-
-// GOOD: prepare with unquoted placeholder
-$results = $wpdb->get_results(
-    $wpdb->prepare(
-        "SELECT * FROM %i WHERE post_author = %d AND post_status = %s",
-        $wpdb->posts,
-        $user_id,
-        'publish'
-    )
-);
-
-// GOOD: LIKE query with esc_like
-$like = '%' . $wpdb->esc_like( $search_term ) . '%';
-$results = $wpdb->get_results(
-    $wpdb->prepare(
-        "SELECT * FROM $wpdb->posts WHERE post_title LIKE %s",
-        $like
-    )
-);
-```
-
-### Common `prepare()` Mistakes
-
-```php
-// ❌ Table name in placeholder — adds quotes around table name, breaks query.
-$wpdb->prepare( "SELECT * FROM %s WHERE id = %d", $wpdb->prefix . 'my_table', $id );
-// Result: SELECT * FROM 'wp_my_table' WHERE id = 1  ← quoted table name fails
-
-// ✅ Interpolate table name directly, prepare only values.
-$table = $wpdb->prefix . 'my_table';
-$wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ) );
-// Or use %i (WP 6.2+): $wpdb->prepare( "SELECT * FROM %i WHERE id = %d", $table, $id );
-
-// ❌ prepare() with no placeholders — triggers error.
-$wpdb->prepare( "SELECT * FROM {$wpdb->posts}" );
-
-// ✅ Don't use prepare() if there's no dynamic data.
-$wpdb->get_results( "SELECT * FROM {$wpdb->posts}" );
-
-// ❌ Mixing individual args and array.
-$wpdb->prepare( "WHERE id = %d AND name = %s", $id, array( $name ) );
-
-// ✅ Pick one format.
-$wpdb->prepare( "WHERE id = %d AND name = %s", $id, $name );
-```
-
+<!-- Full examples: resources/sql-injection-prevention.md -->
 ### Convenience Methods (auto-escape values)
 
 Use these instead of raw SQL when possible:
@@ -416,35 +365,7 @@ add_filter( 'allowed_redirect_hosts', function( $hosts ) {
 
 Every AJAX handler MUST verify a nonce and check capabilities.
 
-```php
-// Enqueue with nonce
-wp_localize_script( 'my-script', 'MyAjax', array(
-    'url'   => admin_url( 'admin-ajax.php' ),
-    'nonce' => wp_create_nonce( 'my_ajax_action' ),
-) );
-
-// Handler
-add_action( 'wp_ajax_my_action', 'handle_my_action' );
-function handle_my_action() {
-    // BAD: no nonce check, no capability check
-    // $data = $_POST['data'];
-
-    // GOOD: verify nonce + capability
-    check_ajax_referer( 'my_ajax_action', 'nonce' );
-
-    if ( ! current_user_can( 'edit_posts' ) ) {
-        wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
-    }
-
-    $data = isset( $_POST['data'] )
-        ? sanitize_text_field( wp_unslash( $_POST['data'] ) )
-        : '';
-
-    // ... process ...
-
-    wp_send_json_success( array( 'result' => $data ) );
-}
-```
+<!-- Full AJAX handler example: resources/ajax-rest-security.md -->
 
 - Use `wp_send_json_success()` / `wp_send_json_error()` for responses (they call `wp_die()` internally).
 - Register `wp_ajax_nopriv_` hooks only when unauthenticated users genuinely need access.
@@ -458,38 +379,7 @@ function handle_my_action() {
 
 Every `register_rest_route()` call MUST include a `permission_callback`. Never use `__return_true` for write operations.
 
-```php
-// BAD: no permission callback (triggers _doing_it_wrong notice)
-register_rest_route( 'myplugin/v1', '/items', array(
-    'methods'  => 'POST',
-    'callback' => 'create_item',
-) );
-
-// BAD: __return_true on a write endpoint
-register_rest_route( 'myplugin/v1', '/items', array(
-    'methods'             => 'POST',
-    'callback'            => 'create_item',
-    'permission_callback' => '__return_true',
-) );
-
-// GOOD: proper permission callback
-register_rest_route( 'myplugin/v1', '/items', array(
-    'methods'             => 'POST',
-    'callback'            => 'create_item',
-    'permission_callback' => function( $request ) {
-        return current_user_can( 'edit_posts' );
-    },
-    'args'                => array(
-        'title' => array(
-            'required'          => true,
-            'validate_callback' => function( $value ) {
-                return is_string( $value ) && strlen( $value ) <= 200;
-            },
-            'sanitize_callback' => 'sanitize_text_field',
-        ),
-    ),
-) );
-```
+<!-- Full REST route examples: resources/ajax-rest-security.md -->
 
 ### Schema Validation
 

@@ -223,86 +223,9 @@ add_action( 'elementor/dynamic_tags/register', 'register_custom_dynamic_tag_grou
 
 Use `$this->add_control()` in `register_controls()` and `$this->get_settings( 'key' )` in `render()`.
 
-### Simple Example: Random Number
+### Code Examples
 
-```php
-class Elementor_Dynamic_Tag_Random_Number extends \Elementor\Core\DynamicTags\Tag {
-    public function get_name(): string { return 'random-number'; }
-    public function get_title(): string { return esc_html__( 'Random Number', 'textdomain' ); }
-    public function get_group(): array { return [ 'actions' ]; }
-    public function get_categories(): array {
-        return [ \Elementor\Modules\DynamicTags\Module::NUMBER_CATEGORY ];
-    }
-    public function render(): void { echo rand(); }
-}
-```
-
-### Advanced Example: ACF Average
-
-```php
-class Elementor_Dynamic_Tag_ACF_Average extends \Elementor\Core\DynamicTags\Tag {
-    public function get_name(): string { return 'acf-average'; }
-    public function get_title(): string { return esc_html__( 'ACF Average', 'textdomain' ); }
-    public function get_group(): array { return [ 'site' ]; }
-    public function get_categories(): array {
-        return [ \Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY ];
-    }
-    protected function register_controls(): void {
-        $this->add_control( 'fields', [
-            'label' => esc_html__( 'Fields', 'textdomain' ),
-            'type' => 'text',
-        ] );
-    }
-    public function render(): void {
-        $fields = $this->get_settings( 'fields' );
-        if ( ! function_exists( 'get_field' ) ) { echo 0; return; }
-        $sum = 0; $count = 0;
-        foreach ( explode( ',', $fields ) as $field_name ) {
-            $field = get_field( $field_name );
-            if ( (int) $field > 0 ) { $sum += (int) $field; $count++; }
-        }
-        echo ( 0 !== $count ) ? $sum / $count : 0;
-    }
-}
-```
-
-### Complex Example: Server Variables
-
-```php
-class Elementor_Dynamic_Tag_Server_Variable extends \Elementor\Core\DynamicTags\Tag {
-    public function get_name(): string { return 'server-variable'; }
-    public function get_title(): string { return esc_html__( 'Server Variable', 'textdomain' ); }
-    public function get_group(): array { return [ 'request-variables' ]; }
-    public function get_categories(): array {
-        return [ \Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY ];
-    }
-    protected function register_controls(): void {
-        $variables = [];
-        foreach ( array_keys( $_SERVER ) as $variable ) {
-            $variables[ $variable ] = ucwords( str_replace( '_', ' ', $variable ) );
-        }
-        $this->add_control( 'user_selected_variable', [
-            'type' => \Elementor\Controls_Manager::SELECT,
-            'label' => esc_html__( 'Variable', 'textdomain' ),
-            'options' => $variables,
-        ] );
-    }
-    public function render(): void {
-        $var = $this->get_settings( 'user_selected_variable' );
-        if ( ! $var || ! isset( $_SERVER[ $var ] ) ) { return; }
-        echo wp_kses_post( $_SERVER[ $var ] );
-    }
-}
-```
-
-### Unregistering Dynamic Tags
-
-```php
-function unregister_dynamic_tags( $dynamic_tags_manager ) {
-    $dynamic_tags_manager->unregister( 'dynamic-tag-name' );
-}
-add_action( 'elementor/dynamic_tags/register', 'unregister_dynamic_tags' );
-```
+See [resources/dynamic-tags.md](resources/dynamic-tags.md) for complete examples: Simple tag (Random Number), Advanced tag with controls (ACF Average), Complex tag with SELECT control (Server Variables), and unregistering tags.
 
 ## 4. Finder
 
@@ -382,29 +305,7 @@ add_filter( 'elementor/finder/categories', 'remove_finder_item' );
 
 ### Simple Example: Social Media Links
 
-```php
-class Elementor_Finder_Social_Media extends \Elementor\Core\Common\Modules\Finder\Base_Category {
-    public function get_id(): string { return 'social-media'; }
-    public function get_title(): string { return esc_html__( 'Social Media', 'textdomain' ); }
-
-    public function get_category_items( array $options = [] ): array {
-        return [
-            'facebook' => [
-                'title' => esc_html__( 'Facebook', 'textdomain' ),
-                'icon' => 'facebook',
-                'url' => 'https://facebook.com/',
-                'keywords' => [ 'facebook', 'social', 'media' ],
-            ],
-            'twitter' => [
-                'title' => esc_html__( 'Twitter', 'textdomain' ),
-                'icon' => 'twitter',
-                'url' => 'https://twitter.com/',
-                'keywords' => [ 'twitter', 'social', 'media' ],
-            ],
-        ];
-    }
-}
-```
+See [resources/context-menu-finder.md](resources/context-menu-finder.md) for a complete Finder category implementation.
 
 ## 5. Context Menu (JavaScript)
 

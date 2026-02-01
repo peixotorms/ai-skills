@@ -11,220 +11,62 @@ Quick-reference for WordPress PHP development. Rules are distilled from the offi
 
 ## 1. Naming Conventions
 
-### 1.1 Functions & Methods
+All names use `snake_case` for functions, variables, and properties. Classes use `Pascal_Case` with underscores (`My_Plugin_Admin`). Hook names are all-lowercase with underscores, prefixed with your plugin slug.
 
-All function and method names MUST be `snake_case`. Magic methods and PHP4 constructors are exempt. Methods in child classes / interface implementations may follow the parent convention.
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Functions | `snake_case` | `acme_get_settings()` |
+| Variables | `snake_case` | `$post_title` |
+| Classes | `Pascal_Case` (underscored) | `Acme_Plugin_Admin` |
+| Constants | `UPPER_SNAKE_CASE` | `ACME_VERSION` |
+| Files | `lowercase-hyphens` | `class-acme-admin.php` |
+| Hook names | `lowercase_underscores` | `acme_after_init` |
+| Post type slugs | `lowercase`, `a-z0-9_-`, max 20 chars | `acme_book` |
 
-```php
-// BAD
-function getPostData() {}
-function Get_Post_Data() {}
+**File naming rules:** All lowercase, hyphens as separators, `class-` prefix for single-class files.
 
-// GOOD
-function get_post_data() {}
-```
+**Global prefix rule:** ALL plugin/theme globals (functions, classes, constants, hooks, namespaces) must start with a unique prefix (min 4 chars). Blocked prefixes: `wordpress`, `wp`, `_`, `php`.
 
-Do NOT prefix functions with double underscores (`__`) unless they are PHP magic methods.
+**Post type slugs:** Max 20 chars, no reserved names (`post`, `page`, `attachment`, etc.), no `wp_` prefix.
 
-### 1.2 Variables & Properties
-
-All variables and object properties MUST be `snake_case`.
-
-```php
-// BAD
-$postTitle = 'Hello';
-$this->postTitle = 'Hello';
-
-// GOOD
-$post_title = 'Hello';
-$this->post_title = 'Hello';
-```
-
-**Known exceptions from WP core** (allowed as-is): `$post_ID`, `$comment_ID`, `$user_ID`, `$tag_ID`, `$cat_ID`, `$is_IE`, `$is_IIS`, `$PHP_SELF`.
-
-### 1.3 Classes, Interfaces, Traits, Enums
-
-Use `Pascal_Case` with underscores separating words (WordPress convention, not PSR).
-
-```php
-// BAD
-class myPlugin {}
-class my_plugin {}
-
-// GOOD
-class My_Plugin {}
-class My_Plugin_Admin {}
-```
-
-WP native classes use this pattern: `WP_Query`, `WP_REST_Controller`, `Custom_Background`.
-
-### 1.4 File Names
-
-| Rule | Example |
-|------|---------|
-| All lowercase | `my-plugin.php` |
-| Hyphens as separators (no underscores) | `class-my-widget.php` |
-| Files containing a single class: prefix with `class-` | `class-my-plugin-admin.php` |
-| Theme template files may use underscores | `single-my_cpt.php` |
-
-### 1.5 Hook Names
-
-Hook names (actions/filters) invoked with `do_action()` / `apply_filters()` MUST be:
-
-- **All lowercase**
-- **Words separated by underscores**
-- **Prefixed with your plugin/theme slug**
-
-```php
-// BAD
-do_action( 'MyPlugin_Init' );
-do_action( 'my-plugin-init' );
-
-// GOOD
-do_action( 'myplugin_init' );
-do_action( 'myplugin_after_setup' );
-apply_filters( 'myplugin_post_title', $title );
-```
-
-### 1.6 Post Type Slugs
-
-Rules enforced by `ValidPostTypeSlugSniff`:
-
-| Rule | Detail |
-|------|--------|
-| Max length | 20 characters (SQL column limit) |
-| Valid characters | Lowercase `a-z`, `0-9`, hyphens, underscores |
-| No reserved names | `post`, `page`, `attachment`, `revision`, `nav_menu_item`, `action`, `author`, `order`, `theme` |
-| No `wp_` prefix | Reserved for WordPress core post types |
-
-```php
-// BAD
-register_post_type( 'MyBooks' );            // uppercase
-register_post_type( 'wp_custom_books' );    // wp_ prefix reserved
-register_post_type( 'page' );              // reserved name
-register_post_type( 'a_very_long_custom_post_type_name' ); // >20 chars
-
-// GOOD
-register_post_type( 'acme_book' );
-```
-
-### 1.7 Global Prefix Rule
-
-ALL globals defined by a plugin or theme must start with a unique prefix (minimum 4 characters). This applies to:
-
-- Functions, classes, interfaces, traits, enums in the global namespace
-- Global variables and `$GLOBALS` keys
-- Constants (both `const` and `define()`)
-- Hook names
-- Namespaces
-
-**Blocked prefixes:** `wordpress`, `wp`, `_`, `php`.
-
-```php
-// BAD (no prefix or too short)
-function init() {}
-define( 'VERSION', '1.0' );
-$GLOBALS['data'] = [];
-
-// GOOD
-function acme_init() {}
-define( 'ACME_VERSION', '1.0' );
-$GLOBALS['acme_data'] = [];
-// Or use a namespace:
-namespace Acme\Plugin;
-```
+<!-- Detailed code examples: resources/naming-best-practices.md -->
 
 ---
 
 ## 2. PHP Best Practices (WordPress-Specific)
 
-### 2.1 Yoda Conditions
+**Yoda conditions:** Place literals on the LEFT side of `==`, `!=`, `===`, `!==` comparisons.
 
-Place the literal/constant on the LEFT side of comparisons. This prevents accidental assignment.
+**Strict comparisons:** Always pass `true` as third arg to `in_array()`, `array_search()`, `array_keys()`.
 
-```php
-// BAD
-if ( $value === true ) {}
-if ( $status == 'active' ) {}
-
-// GOOD
-if ( true === $value ) {}
-if ( 'active' === $status ) {}
-```
-
-Applies to `==`, `!=`, `===`, `!==`. Variable-to-variable comparisons are exempt.
-
-### 2.2 Strict `in_array()` / `array_search()` / `array_keys()`
-
-Always pass `true` as the third parameter for strict type comparison.
-
-```php
-// BAD
-in_array( $value, $allowed );
-array_search( $key, $haystack );
-array_keys( $data, $filter_value );
-
-// GOOD
-in_array( $value, $allowed, true );
-array_search( $key, $haystack, true );
-array_keys( $data, $filter_value, true );
-```
-
-### 2.3 Forbidden Functions
+**Forbidden functions:**
 
 | Function | Why | Alternative |
 |----------|-----|-------------|
 | `extract()` | Pollutes local scope unpredictably | Destructure manually |
-| `@` (error suppression) | Hides errors; use proper handling | Check return values; use `wp_safe_*` |
-| `ini_set()` | Breaks interoperability between plugins | See table below |
+| `@` (error suppression) | Hides errors | Check return values; use `wp_safe_*` |
+| `ini_set()` | Breaks interoperability | Use WP constants (`WP_DEBUG`, etc.) |
 
-**`ini_set()` replacements:**
+**Development-only functions** (remove before shipping): `var_dump`, `var_export`, `print_r`, `error_log`, `trigger_error`, `phpinfo`, and related debug functions.
 
-| ini directive | Use instead |
-|---------------|-------------|
-| `display_errors` | `WP_DEBUG_DISPLAY` constant |
-| `error_reporting` | `WP_DEBUG` constant |
-| `log_errors` | `WP_DEBUG_LOG` constant |
-| `memory_limit` | `wp_raise_memory_limit()` |
-| `max_execution_time` | `set_time_limit()` |
+**Use WordPress functions over PHP natives:**
 
-### 2.4 Development Functions (No Production Use)
+| PHP Native | WordPress Alternative |
+|------------|----------------------|
+| `json_encode()` | `wp_json_encode()` |
+| `parse_url()` | `wp_parse_url()` |
+| `curl_*()` | `wp_remote_get()` / `wp_remote_post()` |
+| `file_get_contents()` (remote) | `wp_remote_get()` |
+| `unlink()` | `wp_delete_file()` |
+| `strip_tags()` | `wp_strip_all_tags()` |
+| `rand()` / `mt_rand()` | `wp_rand()` |
+| `file_put_contents()`, `fopen()` | `WP_Filesystem` methods |
 
-These trigger warnings. Remove before shipping:
+Note: `file_get_contents()` for local files (using `ABSPATH`, `WP_CONTENT_DIR`, `plugin_dir_path()`) is acceptable.
 
-`var_dump`, `var_export`, `print_r`, `error_log`, `trigger_error`, `set_error_handler`, `debug_backtrace`, `debug_print_backtrace`, `wp_debug_backtrace_summary`, `error_reporting`, `phpinfo`
+**Type casts:** Use short forms: `(int)`, `(float)`, `(bool)`, `(string)`. Never `(integer)`, `(real)`, or `(unset)`.
 
-### 2.5 Use WordPress Functions Over PHP Natives
-
-| PHP Native | WordPress Alternative | Since WP |
-|------------|----------------------|----------|
-| `json_encode()` | `wp_json_encode()` | 4.1 |
-| `parse_url()` | `wp_parse_url()` | 4.4 |
-| `curl_*()` | `wp_remote_get()` / `wp_remote_post()` | 2.7 |
-| `file_get_contents()` (remote) | `wp_remote_get()` | 2.7 |
-| `unlink()` | `wp_delete_file()` | 4.2 |
-| `rename()` | `WP_Filesystem::move()` | 2.5 |
-| `strip_tags()` | `wp_strip_all_tags()` | 2.9 |
-| `rand()` / `mt_rand()` | `wp_rand()` | 2.6.2 |
-| `file_put_contents()`, `fopen()`, etc. | `WP_Filesystem` methods | 2.5 |
-
-Note: `file_get_contents()` for local files (using `ABSPATH`, `WP_CONTENT_DIR`, `plugin_dir_path()`, etc.) is acceptable.
-
-### 2.6 Type Casts
-
-Use short, normalized forms:
-
-```php
-// BAD
-$val = (integer) $input;
-$val = (real) $input;
-(unset) $var;  // removed in PHP 8.0
-
-// GOOD
-$val = (int) $input;
-$val = (float) $input;
-unset( $var );
-```
+<!-- Detailed code examples: resources/naming-best-practices.md -->
 
 ---
 
@@ -412,110 +254,19 @@ add_action( 'wp_enqueue_scripts', 'acme_frontend_assets' );
 
 ## 6. WordPress API Usage
 
-### 6.1 Capabilities, Not Roles
-
-Use specific capabilities in `current_user_can()`, not role names.
-
-```php
-// BAD
-if ( current_user_can( 'administrator' ) ) {}
-if ( current_user_can( 'editor' ) ) {}
-
-// GOOD
-if ( current_user_can( 'manage_options' ) ) {}
-if ( current_user_can( 'edit_others_posts' ) ) {}
-```
+Key rules for WordPress API calls. Use capabilities (not roles) in `current_user_can()`. Cron intervals must be 15+ minutes. Limit `posts_per_page` (no `-1`). Never overwrite WP globals (`$post`, `$wp_query`). Always pass `$single` to `get_post_meta()`. Avoid `current_time( 'timestamp' )` -- use `time()` for UTC or `current_time( 'mysql' )` for formatted local time.
 
 Common capabilities: `manage_options`, `edit_posts`, `edit_others_posts`, `publish_posts`, `delete_posts`, `upload_files`, `edit_theme_options`, `activate_plugins`.
 
-### 6.2 Cron Intervals
+`get_post_meta()` `$single` applies to: `get_post_meta`, `get_user_meta`, `get_term_meta`, `get_comment_meta`, `get_site_meta`, `get_metadata`, `get_metadata_raw`, `get_metadata_default`.
 
-Cron schedules must not be shorter than 15 minutes (900 seconds) per VIP/hosting guidelines.
-
-```php
-// BAD
-add_filter( 'cron_schedules', function( $schedules ) {
-    $schedules['every_minute'] = array(
-        'interval' => 60,
-        'display'  => 'Every Minute',
-    );
-    return $schedules;
-} );
-
-// GOOD
-add_filter( 'cron_schedules', function( $schedules ) {
-    $schedules['every_thirty_min'] = array(
-        'interval' => 1800,
-        'display'  => 'Every 30 Minutes',
-    );
-    return $schedules;
-} );
-```
-
-### 6.3 Posts Per Page
-
-Avoid excessively high `posts_per_page` values (default limit: 100). Use pagination instead of `-1`.
-
-```php
-// BAD
-$query = new WP_Query( array( 'posts_per_page' => -1 ) );
-$query = new WP_Query( array( 'posts_per_page' => 999 ) );
-
-// GOOD
-$query = new WP_Query( array( 'posts_per_page' => 50 ) );
-```
-
-### 6.4 Do Not Override WordPress Globals
-
-Never overwrite WP native globals like `$post`, `$wp_query`, `$authordata`, `$currentday`, `$page`, etc. in the global scope.
-
-```php
-// BAD (in global scope or after global import)
-global $post;
-$post = get_post( 123 ); // overwrites the global
-
-// GOOD
-$my_post = get_post( 123 );
-```
-
-### 6.5 `get_post_meta()` -- Always Pass `$single`
-
-When calling `get_post_meta()` (or any `get_*_meta()`) with a `$key`, always specify the `$single` parameter to make the return type explicit.
-
-```php
-// BAD - ambiguous return type (array vs string)
-$value = get_post_meta( $post_id, 'acme_field' );
-
-// GOOD
-$value = get_post_meta( $post_id, 'acme_field', true );   // returns string
-$values = get_post_meta( $post_id, 'acme_field', false );  // returns array
-```
-
-Applies to: `get_post_meta`, `get_user_meta`, `get_term_meta`, `get_comment_meta`, `get_site_meta`, `get_metadata`, `get_metadata_raw`, `get_metadata_default`.
-
-### 6.6 `current_time()` Is NOT a Unix Timestamp
-
-`current_time( 'timestamp' )` returns a "WordPress timestamp" (Unix time + timezone offset) -- NOT a real Unix timestamp. This causes bugs in date math.
-
-```php
-// BAD
-$now = current_time( 'timestamp' );
-$now = current_time( 'U' );
-
-// GOOD - for UTC timestamp
-$now = time();
-
-// GOOD - for formatted local time
-$now = current_time( 'mysql' );
-$now = current_time( 'Y-m-d H:i:s' );
-
-// GOOD - if you explicitly need UTC via current_time
-$now = current_time( 'U', true );  // gmt=true, but time() is simpler
-```
+<!-- Detailed code examples: resources/api-deprecated-formatting.md -->
 
 ---
 
 ## 7. Deprecated Functions (Common Replacements)
+
+Common deprecated functions and their replacements. WPCS flags usage as an error if the function was deprecated before your configured minimum WP version, and a warning otherwise.
 
 | Deprecated | Since | Replacement |
 |-----------|-------|-------------|
@@ -546,128 +297,33 @@ $now = current_time( 'U', true );  // gmt=true, but time() is simpler
 | `seems_utf8()` | 6.9 | `wp_is_valid_utf8()` |
 | `current_user_can_for_blog()` | 6.7 | `current_user_can_for_site()` |
 
-WPCS flags usage as an error if the function was deprecated before your configured minimum WP version, and a warning otherwise.
+<!-- Full table also in: resources/api-deprecated-formatting.md -->
 
 ---
 
 ## 8. Formatting
 
-### 8.1 Spacing
+**Spacing:** WordPress uses spaces inside parentheses, brackets, and around operators. Control structures always have spaces after keywords and inside parens: `if ( $x )`, `foreach ( $arr as $v )`.
 
-WordPress uses spaces inside parentheses, brackets, and around operators:
+**Indentation:** Use **tabs**, not spaces. Multi-line arrays: one item per line, trailing comma.
 
-```php
-// BAD
-if($condition){
-    $arr = array('a'=>1,'b'=>2);
-    foreach($arr as $k=>$v){}
-}
+**Operator spacing:** Spaces around `=`, `+`, `.`, `=>`, etc. No spaces around `->` or `?->`.
 
-// GOOD
-if ( $condition ) {
-    $arr = array( 'a' => 1, 'b' => 2 );
-    foreach ( $arr as $k => $v ) {}
-}
-```
+**Cast spacing:** Space after cast, no space inside: `(int) $val`.
 
-**Control structures** always use spaces after keywords and inside parentheses:
-
-```php
-if ( $a ) {}
-elseif ( $b ) {}
-for ( $i = 0; $i < 10; $i++ ) {}
-while ( $condition ) {}
-switch ( $var ) {}
-```
-
-### 8.2 Indentation
-
-- Use **tabs** for indentation, not spaces.
-- Array items: one item per line for multi-line arrays, with trailing comma.
-
-```php
-$args = array(
-    'post_type'      => 'acme_book',
-    'posts_per_page' => 10,
-    'orderby'        => 'date',
-    'order'          => 'DESC',
-);
-```
-
-### 8.3 Operator Spacing
-
-```php
-// BAD
-$a=$b+$c;
-$d = $e.$f;
-
-// GOOD
-$a = $b + $c;
-$d = $e . $f;
-```
-
-### 8.4 Cast Spacing
-
-A space after the cast, no space inside:
-
-```php
-// BAD
-$id = (int)$_GET['id'];
-$id = ( int ) $_GET['id'];
-
-// GOOD
-$id = (int) $_GET['id'];
-```
-
-### 8.5 Object Operator Spacing
-
-No spaces around `->` or `?->`:
-
-```php
-// BAD
-$post -> post_title;
-
-// GOOD
-$post->post_title;
-```
+<!-- Detailed code examples: resources/api-deprecated-formatting.md -->
 
 ---
 
 ## 9. Testing
 
-### 9.1 PHP Testing
+**PHP:** Use PHPUnit with `WP_UnitTestCase`. Install via `composer require --dev phpunit/phpunit` or `wp scaffold plugin-tests`. Test files in `tests/`, named `test-class-{name}.php`.
 
-- Use **PHPUnit** with the WordPress test framework (`WP_UnitTestCase`).
-- Install via `composer require --dev phpunit/phpunit` or use `wp scaffold plugin-tests`.
-- Test files go in `tests/` directory.
-- Class test files: `test-class-{name}.php` or `class-test-{name}.php`.
+**JavaScript:** Use `@wordpress/scripts` (bundles Jest): `npx wp-scripts test-unit-js`. E2E via `@wordpress/e2e-test-utils`.
 
-```php
-class Test_Acme_Feature extends WP_UnitTestCase {
-    public function test_something_returns_expected() {
-        $result = acme_do_something();
-        $this->assertEquals( 'expected', $result );
-    }
-}
-```
+**Linting:** `vendor/bin/phpcs --standard=WordPress src/` for PHP. `npx wp-scripts lint-js` and `npx wp-scripts lint-style` for JS/CSS.
 
-### 9.2 JavaScript Testing
-
-- Use `@wordpress/scripts` which bundles Jest: `npx wp-scripts test-unit-js`.
-- Tests in `__tests__/` or `*.test.js` files.
-- For E2E: `@wordpress/e2e-test-utils` with Puppeteer/Playwright.
-
-### 9.3 Linting
-
-```bash
-# PHP coding standards
-composer require --dev wp-coding-standards/wpcs dealerdirect/phpcodesniffer-composer-installer
-vendor/bin/phpcs --standard=WordPress src/
-
-# JS/CSS lint
-npx wp-scripts lint-js
-npx wp-scripts lint-style
-```
+<!-- Detailed code examples: resources/testing-patterns.md -->
 
 ---
 

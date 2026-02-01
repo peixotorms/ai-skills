@@ -226,93 +226,13 @@ dependency uses blocking, the dependent script cannot use `async`.
 
 ## 4. AJAX
 
-WordPress routes all AJAX requests through `wp-admin/admin-ajax.php`.
+WordPress routes all AJAX requests through `wp-admin/admin-ajax.php`. The standard
+pattern: register `wp_ajax_{action}` (and optionally `wp_ajax_nopriv_{action}`) hooks,
+verify the nonce with `check_ajax_referer()`, sanitize input, process data, and return
+a JSON response via `wp_send_json_success()` or `wp_send_json_error()`. On the client
+side, use `jQuery.post()` with the localized AJAX URL and action name.
 
-### PHP Handler (Server Side)
-
-```php
-// Logged-in users.
-add_action( 'wp_ajax_map_load_posts', 'map_ajax_load_posts' );
-// Non-logged-in users (public endpoints).
-add_action( 'wp_ajax_nopriv_map_load_posts', 'map_ajax_load_posts' );
-
-function map_ajax_load_posts(): void {
-    // 1. Verify nonce.
-    check_ajax_referer( 'map_ajax_nonce', 'nonce' );
-
-    // 2. Check capability (if needed).
-    if ( ! current_user_can( 'read' ) ) {
-        wp_send_json_error( array( 'message' => 'Unauthorized.' ), 403 );
-    }
-
-    // 3. Sanitize input.
-    $page     = absint( $_POST['page'] ?? 1 );
-    $category = sanitize_text_field( wp_unslash( $_POST['category'] ?? '' ) );
-
-    // 4. Query data.
-    $query = new WP_Query( array(
-        'post_type'      => 'post',
-        'posts_per_page' => 10,
-        'paged'          => $page,
-        'category_name'  => $category,
-    ) );
-
-    $posts = array();
-    while ( $query->have_posts() ) {
-        $query->the_post();
-        $posts[] = array(
-            'id'    => get_the_ID(),
-            'title' => get_the_title(),
-            'url'   => get_permalink(),
-        );
-    }
-    wp_reset_postdata();
-
-    // 5. Send JSON response.
-    wp_send_json_success( array(
-        'posts'    => $posts,
-        'hasMore'  => $page < $query->max_num_pages,
-    ) );
-}
-```
-
-### JavaScript (Client Side)
-
-```js
-( function( $ ) {
-    var page = 1;
-
-    $( '#map-load-more' ).on( 'click', function() {
-        var $btn = $( this );
-        $btn.prop( 'disabled', true ).text( mapAjax.i18n.loading );
-
-        $.post( mapAjax.ajaxUrl, {
-            action:   'map_load_posts',
-            nonce:    mapAjax.nonce,
-            page:     ++page,
-            category: $( '#map-category' ).val()
-        } )
-        .done( function( response ) {
-            if ( response.success ) {
-                $.each( response.data.posts, function( i, post ) {
-                    $( '#map-posts' ).append(
-                        '<li><a href="' + post.url + '">' + post.title + '</a></li>'
-                    );
-                } );
-                if ( ! response.data.hasMore ) {
-                    $btn.remove();
-                }
-            }
-        } )
-        .fail( function() {
-            alert( mapAjax.i18n.error );
-        } )
-        .always( function() {
-            $btn.prop( 'disabled', false ).text( 'Load More' );
-        } );
-    } );
-} )( jQuery );
-```
+<!-- Full PHP handler and jQuery client examples: resources/ajax-patterns.md -->
 
 ### Response Functions
 
@@ -406,54 +326,12 @@ post locking, autosave, and login session management.
 
 ### How It Works
 
-1. Browser fires a "tick" every 15–120 seconds (default: 60s on most pages, 15s on post editor).
+1. Browser fires a "tick" every 15-120 seconds (default: 60s on most pages, 15s on post editor).
 2. Client-side code attaches data via `heartbeat-send` event.
 3. Server processes data through `heartbeat_received` filter.
 4. Client receives response via `heartbeat-tick` event.
 
-### Sending Data (JavaScript)
-
-```js
-jQuery( document ).on( 'heartbeat-send', function( event, data ) {
-    data.map_check_status = {
-        postId: mapConfig.postId,
-        timestamp: Date.now(),
-    };
-} );
-```
-
-### Processing on Server (PHP)
-
-```php
-add_filter( 'heartbeat_received', 'map_heartbeat_received', 10, 2 );
-
-function map_heartbeat_received( array $response, array $data ): array {
-    if ( empty( $data['map_check_status'] ) ) {
-        return $response;
-    }
-
-    $post_id = absint( $data['map_check_status']['postId'] );
-    $post    = get_post( $post_id );
-
-    $response['map_check_status'] = array(
-        'modified' => $post ? $post->post_modified : null,
-        'status'   => $post ? $post->post_status : 'not_found',
-    );
-
-    return $response;
-}
-```
-
-### Receiving Response (JavaScript)
-
-```js
-jQuery( document ).on( 'heartbeat-tick', function( event, data ) {
-    if ( data.map_check_status ) {
-        console.log( 'Post status:', data.map_check_status.status );
-        console.log( 'Last modified:', data.map_check_status.modified );
-    }
-} );
-```
+<!-- Full send/receive code, interval control, and disabling examples: resources/heartbeat-templates.md -->
 
 ### Hooks
 
@@ -465,27 +343,6 @@ jQuery( document ).on( 'heartbeat-tick', function( event, data ) {
 | `heartbeat_received`          | Filter | PHP    | Process data for logged-in users |
 | `heartbeat_nopriv_received`   | Filter | PHP    | Process data for logged-out users|
 | `heartbeat_settings`          | Filter | PHP    | Modify heartbeat interval        |
-
-### Controlling the Interval
-
-```php
-add_filter( 'heartbeat_settings', function ( array $settings ): array {
-    $settings['interval'] = 30; // Seconds (15–120).
-    return $settings;
-} );
-```
-
-### Disabling Heartbeat
-
-```php
-// Disable everywhere except the post editor.
-add_action( 'init', function (): void {
-    global $pagenow;
-    if ( 'post.php' !== $pagenow && 'post-new.php' !== $pagenow ) {
-        wp_deregister_script( 'heartbeat' );
-    }
-} );
-```
 
 ### Use Cases
 
@@ -500,25 +357,10 @@ add_action( 'init', function (): void {
 ## 7. wp.template (Underscore Templates)
 
 WordPress bundles `wp-util` which provides `wp.template()` for client-side
-HTML rendering using Underscore.js template syntax.
-
-### PHP: Define Template
-
-```php
-add_action( 'admin_footer', function (): void {
-    ?>
-    <script type="text/html" id="tmpl-map-item">
-        <div class="map-item" data-id="{{ data.id }}">
-            <h3>{{ data.title }}</h3>
-            <p>{{{ data.description }}}</p>
-            <# if ( data.featured ) { #>
-                <span class="map-badge">Featured</span>
-            <# } #>
-        </div>
-    </script>
-    <?php
-} );
-```
+HTML rendering using Underscore.js template syntax. Define templates in PHP
+using `<script type="text/html" id="tmpl-{name}">` blocks (typically in
+`admin_footer`), then render in JavaScript with `wp.template( '{name}' )`.
+Requires `wp-util` as a script dependency.
 
 ### Template Syntax
 
@@ -528,28 +370,7 @@ add_action( 'admin_footer', function (): void {
 | `{{{ data.val }}}` | Raw HTML output (trust the source) | `{{{ data.html }}}`        |
 | `<# code #>`     | JavaScript logic (if/for)           | `<# if (data.x) { #>`     |
 
-### JavaScript: Render Template
-
-```js
-( function( $ ) {
-    var template = wp.template( 'map-item' ); // Matches id="tmpl-map-item".
-
-    var html = template( {
-        id: 42,
-        title: 'Sample Item',
-        description: '<em>A great item.</em>',
-        featured: true,
-    } );
-
-    $( '#map-container' ).append( html );
-} )( jQuery );
-```
-
-Requires `wp-util` dependency:
-
-```php
-wp_enqueue_script( 'map-admin', '...', array( 'jquery', 'wp-util' ), '1.0.0', true );
-```
+<!-- Full PHP template definition and JS rendering examples: resources/heartbeat-templates.md -->
 
 ---
 

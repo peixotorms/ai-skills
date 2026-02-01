@@ -8,6 +8,13 @@ description: Use when building WordPress plugins or themes — architecture, lif
 Consolidated reference for plugin architecture, lifecycle, settings, data storage,
 WP-CLI integration, static analysis, coding standards, testing, and deployment.
 
+**Resource files** (detailed code examples):
+
+- `resources/settings-api.md` — Full Settings_Page class implementation
+- `resources/wp-cli.md` — WP-CLI custom commands and operations reference
+- `resources/static-analysis-testing.md` — PHPStan, PHPCS, and PHPUnit testing
+- `resources/build-deploy.md` — Build, deploy, and release workflows
+
 ---
 
 ## 1. Plugin Architecture
@@ -238,106 +245,7 @@ teardown only when needed.
 
 ## 3. Settings API
 
-### Registering Settings
-
-```php
-namespace MyAwesomePlugin\Admin;
-
-class Settings_Page {
-
-    public function register(): void {
-        add_action( 'admin_menu', [ $this, 'add_menu' ] );
-        add_action( 'admin_init', [ $this, 'register_settings' ] );
-    }
-
-    public function add_menu(): void {
-        add_options_page(
-            __( 'My Awesome Plugin', 'my-awesome-plugin' ),   // Page title
-            __( 'My Plugin', 'my-awesome-plugin' ),            // Menu title
-            'manage_options',                                   // Capability
-            'my-awesome-plugin',                                // Menu slug
-            [ $this, 'render_page' ]                           // Callback
-        );
-    }
-
-    public function register_settings(): void {
-        register_setting(
-            'map_options_group',       // Option group
-            'map_settings',            // Option name
-            [
-                'type'              => 'array',
-                'sanitize_callback' => [ $this, 'sanitize' ],
-                'default'           => [],
-            ]
-        );
-
-        add_settings_section(
-            'map_general',
-            __( 'General Settings', 'my-awesome-plugin' ),
-            '__return_null',
-            'my-awesome-plugin'
-        );
-
-        add_settings_field(
-            'map_api_key',
-            __( 'API Key', 'my-awesome-plugin' ),
-            [ $this, 'render_api_key_field' ],
-            'my-awesome-plugin',
-            'map_general'
-        );
-
-        add_settings_field(
-            'map_max_results',
-            __( 'Max Results', 'my-awesome-plugin' ),
-            [ $this, 'render_max_results_field' ],
-            'my-awesome-plugin',
-            'map_general'
-        );
-    }
-
-    public function sanitize( $input ): array {
-        $clean = [];
-        $clean['api_key']     = sanitize_text_field( $input['api_key'] ?? '' );
-        $clean['max_results'] = absint( $input['max_results'] ?? 10 );
-        $clean['enabled']     = ! empty( $input['enabled'] );
-        return $clean;
-    }
-
-    public function render_page(): void {
-        if ( ! current_user_can( 'manage_options' ) ) {
-            return;
-        }
-        ?>
-        <div class="wrap">
-            <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-            <form action="options.php" method="post">
-                <?php
-                settings_fields( 'map_options_group' );
-                do_settings_sections( 'my-awesome-plugin' );
-                submit_button();
-                ?>
-            </form>
-        </div>
-        <?php
-    }
-
-    public function render_api_key_field(): void {
-        $options = get_option( 'map_settings', [] );
-        printf(
-            '<input type="text" name="map_settings[api_key]" value="%s" class="regular-text" />',
-            esc_attr( $options['api_key'] ?? '' )
-        );
-    }
-
-    public function render_max_results_field(): void {
-        $options = get_option( 'map_settings', [] );
-        printf(
-            '<input type="number" name="map_settings[max_results]" value="%d" min="1" max="100" />',
-            absint( $options['max_results'] ?? 10 )
-        );
-    }
-}
-```
+Full Settings_Page class implementation: see `resources/settings-api.md`.
 
 ### Options API
 
@@ -420,396 +328,17 @@ $results = $wpdb->get_results( $wpdb->prepare(
 
 ---
 
-## 5. WP-CLI Integration
+## 5. WP-CLI, Static Analysis, Testing, Build & Deploy
 
-### Registering Custom Commands
+Detailed references in resource files:
 
-```php
-namespace MyAwesomePlugin\CLI;
-
-use WP_CLI;
-use WP_CLI\Utils;
-
-class Commands {
-    public static function register(): void {
-        WP_CLI::add_command( 'my-plugin sync', [ self::class, 'sync' ] );
-        WP_CLI::add_command( 'my-plugin cleanup', [ self::class, 'cleanup' ] );
-    }
-
-    /**
-     * Sync data from external API.
-     *
-     * ## OPTIONS
-     * [--dry-run]  : Preview changes without writing.
-     * [--limit=<n>]: Max items to sync. Default 100.
-     *
-     * ## EXAMPLES
-     *     wp my-plugin sync --dry-run
-     *     wp my-plugin sync --limit=50
-     */
-    public static function sync( array $args, array $assoc_args ): void {
-        $dry_run = Utils\get_flag_value( $assoc_args, 'dry-run', false );
-        $limit   = (int) Utils\get_flag_value( $assoc_args, 'limit', 100 );
-
-        $items    = map_fetch_items( $limit );
-        $progress = Utils\make_progress_bar( 'Syncing', count( $items ) );
-
-        foreach ( $items as $item ) {
-            if ( ! $dry_run ) {
-                map_process_item( $item );
-            }
-            $progress->tick();
-        }
-        $progress->finish();
-        WP_CLI::success( sprintf( 'Processed %d items.', count( $items ) ) );
-    }
-
-    /**
-     * Clean up stale data.
-     * ## OPTIONS
-     * [--yes]: Skip confirmation prompt.
-     */
-    public static function cleanup( array $args, array $assoc_args ): void {
-        WP_CLI::confirm( 'Delete all stale records?', $assoc_args );
-        global $wpdb;
-        $deleted = $wpdb->query(
-            "DELETE FROM {$wpdb->prefix}map_logs
-             WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY)"
-        );
-        WP_CLI::success( sprintf( 'Deleted %d stale records.', $deleted ) );
-    }
-}
-```
-
-### wp-cli.yml
-
-```yaml
-path: /var/www/html
-url: https://example.com
-apache_modules: [mod_rewrite]
-@staging:
-  url: https://staging.example.com
-```
+- **WP-CLI** (custom commands, operations reference): `resources/wp-cli.md`
+- **PHPStan, PHPCS, Testing**: `resources/static-analysis-testing.md`
+- **Build & Deploy** (Composer, JS/CSS, SVN, GitHub releases): `resources/build-deploy.md`
 
 ---
 
-## 6. WP-CLI Operations Reference
-
-### Search-Replace (Always Dry-Run First)
-
-```bash
-# 1. Backup.
-wp db export backup.sql
-
-# 2. Dry run — review impact.
-wp search-replace 'http://old.example.com' 'https://new.example.com' --dry-run
-
-# 3. Run for real (include non-core tables if needed).
-wp search-replace 'http://old.example.com' 'https://new.example.com' \
-    --all-tables-with-prefix --report-changed-only
-
-# 4. Flush caches and rewrites.
-wp cache flush
-wp rewrite flush
-```
-
-Useful flags: `--dry-run`, `--precise`, `--skip-columns=guid`,
-`--report-changed-only`, `--all-tables-with-prefix`.
-
-### Other Common Operations
-
-```bash
-# Database.
-wp db export backup.sql       # Backup.
-wp db import backup.sql       # Restore (overwrites).
-wp db optimize                # Optimize tables.
-
-# Plugins / themes.
-wp plugin list                # List with status.
-wp plugin install <slug>      # Install.
-wp plugin activate <slug>     # Activate.
-wp plugin update --all        # Update all (avoid on prod without window).
-wp theme activate <slug>
-
-# Cron.
-wp cron event list            # Show scheduled events.
-wp cron event run <hook>      # Run specific event.
-
-# Cache.
-wp cache flush                # Flush object cache.
-wp transient delete --all     # Delete all transients.
-wp rewrite flush              # Regenerate rewrite rules.
-
-# Multisite.
-wp site list
-wp option get siteurl --url=sub.example.com
-wp plugin activate my-plugin --network       # Network-wide.
-# Iterate: for URL in $(wp site list --field=url); do wp <cmd> --url="$URL"; done
-```
-
----
-
-## 7. Static Analysis (PHPStan)
-
-### Configuration: phpstan.neon
-
-```neon
-includes:
-    - phpstan-baseline.neon
-
-parameters:
-    level: 5
-    paths:
-        - includes/
-    excludePaths:
-        - vendor/
-        - vendor-prefixed/
-        - node_modules/
-        - tests/
-    ignoreErrors:
-        # Narrow, documented exceptions only.
-```
-
-### WordPress Stubs
-
-```bash
-# Required for most WordPress plugin/theme repos.
-composer require --dev szepeviktor/phpstan-wordpress
-
-# Additional stubs as needed.
-composer require --dev php-stubs/wordpress-stubs
-composer require --dev php-stubs/woocommerce-stubs
-composer require --dev php-stubs/acf-pro-stubs
-```
-
-Ensure stubs are loaded in `phpstan.neon`:
-
-```neon
-parameters:
-    scanFiles:
-        - %rootDir%/../../php-stubs/wordpress-stubs/wordpress-stubs.php
-    bootstrapFiles:
-        - %rootDir%/../../php-stubs/woocommerce-stubs/woocommerce-stubs.php
-```
-
-### Baseline for Legacy Code
-
-```bash
-# Generate baseline.
-vendor/bin/phpstan analyse --generate-baseline phpstan-baseline.neon
-
-# Ongoing: never baseline new errors. Fix them. Chip away at baseline over time.
-```
-
-### Level Progression
-
-Start at level 0, increase gradually: 0=basic, 1=undefined vars, 2=unknown
-methods, 3=return types, 4=dead code, 5=argument types, 6=missing typehints,
-7=union types, 8=nullability, 9=mixed restrictions.
-
-### WordPress-Specific Annotations
-
-```php
-// REST request typing.
-/** @phpstan-param WP_REST_Request<array{post?: int, per_page?: int}> $request */
-public function get_items( WP_REST_Request $request ): WP_REST_Response { ... }
-
-// Hook callbacks — add accurate @param types.
-/** @param string $new @param string $old @param WP_Post $post */
-function handle_transition( string $new, string $old, WP_Post $post ): void { ... }
-add_action( 'transition_post_status', 'handle_transition', 10, 3 );
-
-// Database results — use object shapes.
-/** @return array<object{id: int, name: string}> */
-function get_user_data(): array { ... }
-```
-
-### Third-Party Class Handling
-
-Prefer stubs over ignoreErrors. If stubs unavailable, use targeted patterns:
-
-```neon
-parameters:
-    ignoreErrors:
-        - '#.*(unknown class|call to method .* on an unknown class) WC_.*#'   # WooCommerce
-        - '#.*(unknown class|call to method .* on an unknown class) ACF.*#'   # ACF Pro
-```
-
----
-
-## 8. Coding Standards (PHPCS)
-
-```bash
-composer require --dev wp-coding-standards/wpcs dealerdirect/phpcodesniffer-composer-installer
-```
-
-### phpcs.xml
-
-```xml
-<?xml version="1.0"?>
-<ruleset name="My Awesome Plugin">
-    <file>./includes</file>
-    <file>./my-awesome-plugin.php</file>
-    <exclude-pattern>./vendor/*</exclude-pattern>
-    <exclude-pattern>./node_modules/*</exclude-pattern>
-    <arg name="extensions" value="php"/>
-    <rule ref="WordPress">
-        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
-    </rule>
-    <rule ref="WordPress.WP.I18n">
-        <properties>
-            <property name="text_domain" type="array">
-                <element value="my-awesome-plugin"/>
-            </property>
-        </properties>
-    </rule>
-    <config name="minimum_supported_wp_version" value="6.2"/>
-</ruleset>
-```
-
-Run: `vendor/bin/phpcs` (check) and `vendor/bin/phpcbf` (auto-fix).
-
----
-
-## 9. Testing
-
-### PHPUnit with wp-phpunit
-
-```json
-{
-    "require-dev": {
-        "yoast/phpunit-polyfills": "^2.0",
-        "wp-phpunit/wp-phpunit": "^6.5"
-    }
-}
-```
-
-### Test Class Example
-
-```php
-namespace MyAwesomePlugin\Tests;
-
-use WP_UnitTestCase;
-
-class Test_Plugin extends WP_UnitTestCase {
-
-    public function test_activation_creates_table(): void {
-        global $wpdb;
-        \MyAwesomePlugin\Activator::activate();
-        $table = $wpdb->prefix . 'map_logs';
-        $this->assertSame( $table, $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) );
-    }
-
-    public function test_settings_sanitize(): void {
-        $page  = new \MyAwesomePlugin\Admin\Settings_Page();
-        $clean = $page->sanitize( [
-            'api_key' => '<script>alert(1)</script>', 'max_results' => '-5',
-        ] );
-        $this->assertSame( '', $clean['api_key'] );
-        $this->assertSame( 0, $clean['max_results'] );
-    }
-
-    public function test_factory_helpers(): void {
-        $id = self::factory()->post->create( [ 'post_title' => 'Test' ] );
-        $this->assertSame( 'Test', get_post( $id )->post_title );
-    }
-}
-```
-
-JavaScript tests: `npx wp-scripts test-unit-js`.
-
----
-
-## 10. Build & Deploy
-
-### Composer for Dependencies
-
-```bash
-# Production install (no dev dependencies).
-composer install --no-dev --optimize-autoloader
-```
-
-### JavaScript / CSS Build
-
-```bash
-# Build with @wordpress/scripts.
-npx wp-scripts build
-
-# Development watch mode.
-npx wp-scripts start
-```
-
-### .distignore
-
-Exclude dev files: `/.git`, `/.github`, `/node_modules`, `/tests`, `/.distignore`,
-`/.editorconfig`, `/.gitignore`, `/phpcs.xml`, `/phpstan.neon`,
-`/phpstan-baseline.neon`, `/phpunit.xml`, `/composer.json`, `/composer.lock`,
-`/package.json`, `/package-lock.json`, `/webpack.config.js`.
-
-### Version Bumping
-
-Update in: plugin header (`Version:`), plugin constant (`MAP_VERSION`),
-`readme.txt` (`Stable tag:`), and `package.json`.
-
-### WordPress.org SVN Deployment
-
-```bash
-svn checkout https://plugins.svn.wordpress.org/my-awesome-plugin svn-repo
-rsync -av --delete --exclude-from=.distignore ./ svn-repo/trunk/
-cd svn-repo && svn add --force trunk/ && svn cp trunk tags/1.0.0
-svn ci -m "Release 1.0.0"
-```
-
-### GitHub Auto-Updates (Plugin Update Checker)
-
-For plugins distributed outside WordPress.org, use
-[YahnisElsts/plugin-update-checker](https://github.com/YahnisElsts/plugin-update-checker):
-
-```php
-require_once __DIR__ . '/vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
-use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
-
-$update_checker = PucFactory::buildUpdateChecker(
-    'https://github.com/your-org/your-plugin/',
-    __FILE__,
-    'your-plugin-slug'
-);
-// Optional: set the branch for stable releases.
-$update_checker->setBranch( 'main' );
-// Optional: use release assets instead of source ZIP.
-$update_checker->getVcsApi()->enableReleaseAssets();
-```
-
-Create GitHub releases with a ZIP asset for each version. The checker polls
-GitHub's API and surfaces updates through WordPress's native update UI.
-
-**GitHub Actions release workflow:**
-
-```yaml
-# .github/workflows/release.yml
-on:
-  push:
-    tags: ['v*']
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: composer install --no-dev --optimize-autoloader
-      - run: npx wp-scripts build  # if JS/CSS build needed
-      - name: Create release ZIP
-        run: |
-          mkdir -p dist
-          rsync -av --exclude-from=.distignore ./ dist/your-plugin/
-          cd dist && zip -r ../your-plugin.zip your-plugin/
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: your-plugin.zip
-```
-
----
-
-## 11. Security Checklist
+## 6. Security Checklist
 
 - Sanitize on input, escape on output. Never trust `$_POST`/`$_GET` directly.
 - Use `wp_unslash()` before sanitizing superglobals. Read explicit keys only.
@@ -819,37 +348,37 @@ jobs:
 
 ---
 
-## 12. WordPress 6.7–6.9 Breaking Changes
+## 7. WordPress 6.7-6.9 Breaking Changes
 
-### WP 6.7 — Translation Loading
+### WP 6.7 -- Translation Loading
 
 `load_plugin_textdomain()` is auto-called for plugins with a `Text Domain` header.
 If you call it manually from `init`, it may load before the preferred translation
 source (language packs). Move manual calls to `after_setup_theme` or remove them
 entirely if the header is set.
 
-### WP 6.8 — Bcrypt Password Hashing
+### WP 6.8 -- Bcrypt Password Hashing
 
 WordPress 6.8 migrates from phpass MD5 to bcrypt (`password_hash()`). Existing
 hashes upgrade transparently on next login. **Impact on plugins:**
 
-- `wp_check_password()` / `wp_hash_password()` still work — use these, never
+- `wp_check_password()` / `wp_hash_password()` still work -- use these, never
   hash passwords manually.
 - Plugins that store or compare raw `$hash` strings from the `user_pass` column
   will break if they assume `$P$` prefix.
 - Custom authentication that bypasses `wp_check_password()` must handle both
   `$P$` (legacy) and `$2y$` (bcrypt) prefixes.
 
-### WP 6.9 — Abilities API & WP_Dependencies Deprecation
+### WP 6.9 -- Abilities API & WP_Dependencies Deprecation
 
 - `WP_Dependencies` class is deprecated. Use `wp_enqueue_script()` /
-  `wp_enqueue_style()` — never instantiate `WP_Dependencies` directly.
+  `wp_enqueue_style()` -- never instantiate `WP_Dependencies` directly.
 - Abilities API (`register_ability()`) replaces ad-hoc `current_user_can()` for
   REST route permissions (see wp-rest-api skill).
 
 ---
 
-## 13. Common Mistakes
+## 8. Common Mistakes
 
 | Mistake | Why It Fails | Fix |
 |---------|-------------|-----|
