@@ -127,13 +127,13 @@ One install gives you all 5 skills. Claude loads only the relevant ones per conv
 
 ### wp-skills
 
-**Comprehensive WordPress guidelines** — 7 focused skills covering coding standards, security, performance, Gutenberg blocks, REST API with Abilities API, plugin development, and core WordPress APIs.
+**Comprehensive WordPress guidelines** — 8 focused skills covering coding standards, security, performance, Gutenberg blocks, REST API with Abilities API, plugin development, core WordPress APIs, and WooCommerce extension development.
 
 ```bash
 claude plugin install wp-skills
 ```
 
-One install gives you all 7 skills. Claude loads only the relevant ones per conversation based on what you're working on.
+One install gives you all 8 skills. Claude loads only the relevant ones per conversation based on what you're working on.
 
 **Skills included:**
 
@@ -146,6 +146,7 @@ One install gives you all 7 skills. Claude loads only the relevant ones per conv
 | `wp-rest-api` | Building WordPress REST API endpoints, custom routes, controllers, or using the Abilities API — route registration, schema validation, permission callbacks, authentication, response shaping, field registration, Abilities API for declarative permissions |
 | `wp-plugins` | Building WordPress plugins or themes — architecture, lifecycle hooks, settings API, data storage, custom tables, WP-CLI commands, PHPStan configuration, PHPCS, testing, build and deploy workflow |
 | `wp-apis` | Working with WordPress core APIs in plugins or themes — admin menus, shortcodes, meta boxes, custom post types, taxonomies, HTTP API, WP-Cron, dashboard widgets, users and roles, privacy (GDPR), theme mods and Customizer, Site Health, global variables, responsive images, advanced hooks |
+| `wc-extensions` | Building WooCommerce extensions — payment gateways, HPOS order storage, product and order CRUD, Store API, REST API, block checkout integration, settings pages, custom emails, key hooks, WP-CLI |
 
 **Command included:**
 
