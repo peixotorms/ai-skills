@@ -11,7 +11,6 @@ claude plugin marketplace add peixotorms/odinlayer-skills
 # 2. Install the plugins you want
 claude plugin install rust-skills
 claude plugin install go-skills
-claude plugin install build-deploy
 ```
 
 ## Available Plugins
@@ -30,7 +29,7 @@ One install gives you all 11 skills. Claude loads only the relevant ones per con
 
 | Skill | Auto-activates when... |
 |-------|------------------------|
-| `rust-guidelines` | Writing or reviewing any Rust code — error handling, API design, types, ownership, lifetimes, smart pointers, generics, domain modeling, RAII, docs, naming, lints, ecosystem |
+| `rust-guidelines` | Writing, reviewing, building, or deploying Rust code — error handling, API design, types, ownership, lifetimes, smart pointers, generics, domain modeling, RAII, docs, naming, lints, build/deploy workflow, test placement |
 | `rust-unsafe` | Writing unsafe code, FFI bindings, raw pointers, or C interop |
 | `rust-async` | Writing async/concurrent code with tokio, channels, mutexes, threads |
 | `rust-performance` | Optimizing performance — profiling, allocations, collections, Rayon, memory layout |
@@ -69,7 +68,7 @@ One install gives you all 3 skills. Claude loads only the relevant ones per conv
 
 | Skill | Auto-activates when... |
 |-------|------------------------|
-| `go-guidelines` | Writing or reviewing any Go code — formatting, naming, doc comments, control structures, functions, defer, data types, methods, interfaces, embedding, initialization, functional options, generics, testing, linting, design principles, anti-patterns |
+| `go-guidelines` | Writing, reviewing, building, or deploying Go code — formatting, naming, doc comments, control structures, functions, defer, data types, methods, interfaces, embedding, initialization, functional options, generics, testing, linting, build/deploy workflow, test placement, anti-patterns |
 | `go-concurrency` | Writing concurrent Go with goroutines, channels, select, sync primitives, worker pools, fan-out/fan-in, context cancellation |
 | `go-errors` | Handling errors — wrapping, `errors.Is`/`errors.As`, sentinel errors, custom types, errors-as-values patterns, panic/recover |
 
@@ -85,29 +84,6 @@ One install gives you all 3 skills. Claude loads only the relevant ones per conv
 - [Google Go Style Guide](https://google.github.io/styleguide/go/)
 - [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments)
 - [Go Proverbs](https://go-proverbs.github.io/)
-
----
-
-### build-deploy
-
-**Language-agnostic build & deploy workflow rules** — Makefile detection, permission checks, temp file hygiene, and test file placement.
-
-```bash
-claude plugin install build-deploy
-```
-
-**Skills included:**
-
-| Skill | Auto-activates when... |
-|-------|------------------------|
-| `build-deploy` | Building, deploying, restarting, rebuilding, running make, generating build artifacts, or creating test files |
-
-**Key rules:**
-
-- Always check for and use `Makefile` before raw build commands
-- Build intermediates go to `/tmp`, not the project directory
-- Check and fix file permissions/ownership before building
-- Temporary tests to `/tmp`; permanent tests to `tests/` (created if needed)
 
 ## Managing Plugins
 

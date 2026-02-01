@@ -1,6 +1,6 @@
 ---
 name: rust-guidelines
-description: Use when writing, reviewing, or refactoring Rust code. Covers error handling, API design, type-driven design, ownership, lifetimes, smart pointers, generics, trait objects, domain modeling, resource lifecycle (RAII), documentation, naming, logging, lints, ecosystem integration, mental models, and anti-patterns. For unsafe/FFI see rust-unsafe, for async/concurrency see rust-async, for performance see rust-performance.
+description: Use when writing, reviewing, refactoring, building, or deploying Rust code. Covers error handling, API design, type-driven design, ownership, lifetimes, smart pointers, generics, trait objects, domain modeling, resource lifecycle (RAII), documentation, naming, logging, lints, ecosystem integration, build/deploy workflow, test file placement, and anti-patterns. For unsafe/FFI see rust-unsafe, for async/concurrency see rust-async, for performance see rust-performance.
 ---
 
 # Rust Guidelines
@@ -592,4 +592,48 @@ undocumented_unsafe_blocks = "warn"
 | `dyn` for known types | Generics for static dispatch |
 | `Rc` when single owner | Just use the value directly |
 | `format!` for simple concatenation | `push_str` or `+` |
+
+---
+
+## Build & Deploy
+
+### Always Use Makefile
+
+Before running `cargo build` or any build command, check if a `Makefile` exists. If it does, **use it** — the Makefile encodes project-specific build steps (embedding assets, setting flags, post-build hooks) that raw commands miss.
+
+| Situation | Action |
+|-----------|--------|
+| Makefile exists with relevant target | `make deploy`, `make build`, `make test`, etc. |
+| Makefile exists, no matching target | List targets, pick closest match |
+| No Makefile | Fall back to `cargo build`, `cargo test`, etc. |
+
+### Permissions & Ownership
+
+Before building or deploying, check file permissions and ownership. Fix to match the project majority:
+
+```bash
+# Identify majority owner:group
+stat -c '%U:%G' * | sort | uniq -c | sort -rn | head -5
+# Fix if needed
+chown -R <user>:<group> .
+```
+
+### Temporary Files
+
+| File type | Location |
+|-----------|----------|
+| Build intermediates, scratch files | `/tmp` — never the project directory |
+| Final build artifacts | Project output dir (`target/`, `dist/`) |
+| Downloaded dependencies | Standard location (`~/.cargo/`) |
+
+**Exception:** If project instructions (CLAUDE.md, Makefile) specify a different temp location, follow those.
+
+### Test File Placement
+
+| Test type | Location |
+|-----------|----------|
+| Temporary (debugging, one-off) | `/tmp` |
+| Permanent, Rust convention | Inline `#[cfg(test)] mod tests` in source files |
+| Permanent, integration tests | `tests/` directory (create if it doesn't exist) |
+| Specific instructions exist | Follow those |
 

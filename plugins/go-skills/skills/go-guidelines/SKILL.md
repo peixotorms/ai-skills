@@ -1,6 +1,6 @@
 ---
 name: go-guidelines
-description: Use when writing, reviewing, or refactoring Go code. Covers formatting, naming, control structures, functions, defer, data types, methods, interfaces, embedding, initialization, functional options pattern, constructor validation, package organization, generics, testing patterns, linting, and common anti-patterns.
+description: Use when writing, reviewing, refactoring, building, or deploying Go code. Covers formatting, naming, control structures, functions, defer, data types, methods, interfaces, embedding, initialization, functional options pattern, constructor validation, package organization, generics, testing patterns, linting, build/deploy workflow, test file placement, and common anti-patterns.
 ---
 
 # Go Guidelines
@@ -867,3 +867,47 @@ go test -coverprofile=c.out && go tool cover -html=c.out  # HTML coverage
 | Context in struct field | Always pass `context.Context` as first parameter |
 | Clever one-liners | Clear, readable multi-line code |
 | `reflect` for simple tasks | Generics or type assertions |
+
+---
+
+## Build & Deploy
+
+### Always Use Makefile
+
+Before running `go build` or any build command, check if a `Makefile` exists. If it does, **use it** — the Makefile encodes project-specific build steps (ldflags, embedding, code generation) that raw commands miss.
+
+| Situation | Action |
+|-----------|--------|
+| Makefile exists with relevant target | `make deploy`, `make build`, `make test`, etc. |
+| Makefile exists, no matching target | List targets, pick closest match |
+| No Makefile | Fall back to `go build`, `go test`, etc. |
+
+### Permissions & Ownership
+
+Before building or deploying, check file permissions and ownership. Fix to match the project majority:
+
+```bash
+# Identify majority owner:group
+stat -c '%U:%G' * | sort | uniq -c | sort -rn | head -5
+# Fix if needed
+chown -R <user>:<group> .
+```
+
+### Temporary Files
+
+| File type | Location |
+|-----------|----------|
+| Build intermediates, scratch files | `/tmp` — never the project directory |
+| Final build artifacts | Project output dir or `$GOBIN` |
+| Downloaded dependencies | Standard location (`~/go/pkg/`) |
+
+**Exception:** If project instructions (CLAUDE.md, Makefile) specify a different temp location, follow those.
+
+### Test File Placement
+
+| Test type | Location |
+|-----------|----------|
+| Temporary (debugging, one-off) | `/tmp` |
+| Permanent, Go convention | `*_test.go` beside the source file |
+| Permanent, integration/e2e | `tests/` directory (create if it doesn't exist) |
+| Specific instructions exist | Follow those |
