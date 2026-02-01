@@ -265,6 +265,50 @@ func GetConfig() *Config {
 }
 ```
 
+## Context Rules
+
+| Rule | Detail |
+|------|--------|
+| Always first parameter | `func DoWork(ctx context.Context, ...)` |
+| Never store in struct | Pass as parameter — storing hides lifecycle |
+| Never use custom context types | Only `context.Context` |
+| `context.Background()` in `main` | Entry point only |
+| `req.Context()` in HTTP handlers | Already provided by framework |
+| Propagate always | Pass to every function that accepts it |
+
+```go
+// BAD: context in struct
+type Service struct {
+    ctx context.Context  // Don't do this
+}
+
+// GOOD: context as first parameter
+func (s *Service) Process(ctx context.Context, data Data) error {
+    return s.db.QueryContext(ctx, query)
+}
+```
+
+## Prefer Synchronous Functions
+
+```go
+// BAD: forcing async on callers
+func FetchData() <-chan Result {
+    ch := make(chan Result)
+    go func() { ch <- doFetch() }()
+    return ch
+}
+
+// GOOD: let caller add concurrency if needed
+func FetchData(ctx context.Context) (Result, error) {
+    return doFetch(ctx)
+}
+
+// Caller can easily wrap if they need async:
+go func() { result, err := FetchData(ctx); ... }()
+```
+
+---
+
 ## Parallelization
 
 ```go
@@ -295,3 +339,6 @@ for i := 0; i < numCPU; i++ {
 | Forgetting `wg.Add` before `go` | WaitGroup may finish early | Always `Add` before launching goroutine |
 | Blocking main without wait | Program exits, goroutines killed | `WaitGroup.Wait()` or `select{}` |
 | Buffered channel as queue | May hide backpressure | Size buffers intentionally |
+| Goroutine with unclear lifetime | Leaks, can't shutdown | Document when/how it exits |
+| Context stored in struct | Hides lifecycle | Pass as first parameter always |
+| Async function by default | Harder to test, compose | Return sync; let caller wrap |

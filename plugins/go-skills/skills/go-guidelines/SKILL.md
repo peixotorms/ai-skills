@@ -7,7 +7,17 @@ description: Use when writing, reviewing, or refactoring Go code. Covers formatt
 
 ## Overview
 
-Idiomatic Go guidelines based on [Effective Go](https://go.dev/doc/effective_go). Go has its own conventions — writing good Go means embracing them, not porting patterns from other languages.
+Idiomatic Go guidelines based on [Effective Go](https://go.dev/doc/effective_go) and [Google Go Style Guide](https://google.github.io/styleguide/go/). Go has its own conventions — writing good Go means embracing them, not porting patterns from other languages.
+
+### Core Proverbs
+
+- **Clear is better than clever** — optimize for readability, not cleverness
+- **A little copying is better than a little dependency** — duplicate small functions rather than import heavy packages
+- **The zero value should be useful** — design types so `var x T` works without initialization
+- **Don't communicate by sharing memory; share memory by communicating** — use channels
+- **Errors are values** — program with them, don't just check them
+- **Don't just check errors, handle them gracefully** — add context, decide action
+- **Reflection is never clear** — avoid `reflect` unless building frameworks
 
 ## Formatting
 
@@ -17,6 +27,25 @@ Idiomatic Go guidelines based on [Effective Go](https://go.dev/doc/effective_go)
 | Indentation | Tabs, not spaces |
 | Line length | No hard limit; break long lines naturally |
 | Braces | Opening brace on same line (mandatory — semicolon insertion) |
+
+### Import Grouping
+
+```go
+import (
+    // 1. Standard library
+    "context"
+    "fmt"
+    "net/http"
+
+    // 2. Third-party packages
+    "github.com/gorilla/mux"
+    "go.uber.org/zap"
+
+    // 3. Internal packages
+    "myproject/internal/auth"
+    "myproject/user"
+)
+```
 
 ## Naming Conventions
 
@@ -28,8 +57,29 @@ Idiomatic Go guidelines based on [Effective Go](https://go.dev/doc/effective_go)
 | Getters | `Owner()` not `GetOwner()` | `func (o *Obj) Name() string` |
 | Setters | `SetOwner()` | `func (o *Obj) SetName(n string)` |
 | One-method interfaces | Method name + `-er` suffix | `Reader`, `Writer`, `Stringer` |
-| Acronyms | All caps | `URL`, `HTTP`, `ID` (not `Url`, `Http`, `Id`) |
-| Local variables | Short names in small scope | `i`, `buf`, `err` |
+| Acronyms | All caps throughout | `URL`, `HTTP`, `ID` (not `Url`, `Http`, `Id`) |
+| Constants | `MixedCaps` (not `ALL_CAPS`) | `MaxRetries`, not `MAX_RETRIES` |
+| Receivers | 1-2 letters, consistent | `func (s *Server)`, not `func (server *Server)` |
+| Local variables | Length ∝ scope size | 1-7 lines: `i`, `buf`; larger scopes: descriptive |
+
+### Doc Comments
+
+```go
+// Package sort provides primitives for sorting slices.
+package sort
+
+// Fprint formats using the default formats and writes to w.
+// It returns the number of bytes written and any write error.
+func Fprint(w io.Writer, a ...any) (n int, err error) {
+```
+
+| Doc comment rule | Detail |
+|------------------|--------|
+| Start with the name of the thing | `// Fprint formats...` not `// This function formats...` |
+| Full sentences | Capitalized, ending with period |
+| Package comment in any file | One `// Package name ...` per package |
+
+### Naming Pitfalls
 
 ```go
 // BAD: Java/C# naming
@@ -39,6 +89,20 @@ type IReader interface { ... }
 // GOOD: Go naming
 func UserName() string { ... }
 type Reader interface { ... }
+
+// BAD: stuttering in constructors
+widget.NewWidget()
+user.NewUser()
+
+// GOOD: package name provides context
+widget.New()
+user.New()
+
+// BAD: ALL_CAPS constants
+const MAX_RETRIES = 3
+
+// GOOD: MixedCaps — name by role, not value
+const MaxRetries = 3
 ```
 
 ## Control Structures
@@ -122,7 +186,7 @@ case int:
 // Return value + error — the Go pattern
 func (f *File) Write(b []byte) (n int, err error)
 
-// Named return values clarify docs
+// Named return values — document meaning in godoc
 func ReadFull(r Reader, buf []byte) (n int, err error) {
     for len(buf) > 0 && err == nil {
         var nr int
@@ -130,8 +194,9 @@ func ReadFull(r Reader, buf []byte) (n int, err error) {
         n += nr
         buf = buf[nr:]
     }
-    return // bare return — uses named values
+    return // naked return — uses named values
 }
+// NOTE: naked returns OK in short functions; avoid in long ones (>10 lines)
 ```
 
 ### Defer
@@ -217,6 +282,7 @@ for _, v := range input {
 | Pre-allocate with `make([]T, 0, cap)` | When size is known or estimable |
 | `len(s)` vs `cap(s)` | Length is current size, capacity is maximum before reallocation |
 | Nil slice is valid | `len(nil) == 0`, `append(nil, x)` works |
+| Prefer nil for empty slices | `var s []T` not `s := []T{}` — nil encodes to `null` in JSON, empty literal to `[]` |
 
 ### Maps
 
@@ -257,6 +323,71 @@ func (t *T) String() string {
 }
 ```
 
+## Design Principles
+
+### Zero Values Should Be Useful
+
+Design types so `var x T` works without initialization:
+
+```go
+// GOOD: zero value is ready to use
+var buf bytes.Buffer
+buf.WriteString("hello")  // works — no New() needed
+
+// GOOD: nil writer falls back to default
+type Logger struct {
+    w io.Writer
+}
+func (l *Logger) Log(msg string) {
+    if l.w == nil { l.w = os.Stderr }
+    fmt.Fprintln(l.w, msg)
+}
+var log Logger
+log.Log("works")  // no constructor needed
+```
+
+### Don't Copy Types with Locks
+
+```go
+// BAD: copying a Mutex copies its state
+type Cache struct {
+    mu sync.Mutex
+    m  map[string]string
+}
+c2 := c1  // copies lock state — undefined behavior!
+
+// GOOD: always use pointer receiver, never copy
+func (c *Cache) Get(key string) string {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.m[key]
+}
+```
+
+### A Little Copying > A Little Dependency
+
+```go
+// Instead of importing a library for one utility:
+func contains(slice []string, item string) bool {
+    for _, s := range slice {
+        if s == item { return true }
+    }
+    return false
+}
+```
+
+### Security
+
+| Rule | Detail |
+|------|--------|
+| `crypto/rand` not `math/rand` | For keys, tokens, secrets — `math/rand` is predictable |
+| Build tags for `syscall` | `//go:build linux` when using platform-specific syscalls |
+| Build tags for `cgo` | `//go:build cgo` — cgo sacrifices memory safety and cross-compilation |
+| Avoid `unsafe` package | Voids all type safety and compatibility guarantees |
+| Avoid `reflect` | Obscures intent, removes compile-time safety |
+
+---
+
 ## Methods
 
 ### Pointer vs Value Receivers
@@ -274,6 +405,10 @@ func (b BigStruct) Process() { ... }  // copies entire struct
 
 // GOOD: pointer receiver
 func (b *BigStruct) Process() { ... }
+
+// Don't pass pointers to small basic types — pass values
+// BAD: func Process(name *string, count *int)
+// GOOD: func Process(name string, count int)
 
 // CONSISTENCY: if any method needs pointer receiver, all should use pointer
 type MyType struct { ... }
@@ -308,6 +443,10 @@ func Process(r io.Reader) (*Result, error) { ... }
 | Don't export implementation types when interface suffices | Return interface from constructors |
 | Interfaces are satisfied implicitly | No `implements` keyword |
 | Name one-method interfaces with `-er` | `Reader`, `Writer`, `Closer`, `Stringer` |
+| Define in consuming package | Not in implementing package |
+| Don't define before use | Wait until you have realistic usage |
+| Don't export unused interfaces | If only used internally, keep unexported |
+| Prefer synchronous functions | Let callers add concurrency — easier to test and reason about |
 
 ### Type Assertions
 
@@ -620,6 +759,10 @@ func TestUser(t *testing.T) {
 | `t.Cleanup()` | Deferred cleanup that runs after test completes |
 | `t.Parallel()` | Opt-in parallel execution within a test |
 | `testdata/` directory | Test fixtures, ignored by Go tooling |
+| Got before want | `t.Errorf("Func(%v) = %v, want %v", input, got, want)` |
+| `t.Error` over `t.Fatal` | Keep going — report all failures in one run |
+| `t.Fatal` only for setup | When test literally cannot proceed |
+| No `t.Fatal` from goroutines | Only call from test function's goroutine |
 
 ---
 
@@ -715,3 +858,12 @@ go test -coverprofile=c.out && go tool cover -html=c.out  # HTML coverage
 | Not using `t.Helper()` | Test helpers report wrong line numbers |
 | Not using `t.Cleanup()` | Cleanup may not run on `t.Fatal()` |
 | `go test` without `-race` | Data races go undetected |
+| Copying struct with `sync.Mutex` | Use pointer receiver, never copy |
+| `math/rand` for secrets | `crypto/rand` for tokens, keys, secrets |
+| In-band errors (`-1`, empty string) | Return `(value, error)` or `(value, bool)` |
+| Defining interface in implementing package | Define where consumed |
+| `ALL_CAPS` constants | `MixedCaps` — Go convention |
+| `import . "pkg"` (dot import) | Makes code origin unclear |
+| Context in struct field | Always pass `context.Context` as first parameter |
+| Clever one-liners | Clear, readable multi-line code |
+| `reflect` for simple tasks | Generics or type assertions |

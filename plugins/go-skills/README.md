@@ -32,6 +32,9 @@ Skills activate automatically when Claude detects Go-related work. You can also 
 /go-review internal/server/handler.go
 ```
 
-## Source
+## Sources
 
-Based on [Effective Go](https://go.dev/doc/effective_go).
+- [Effective Go](https://go.dev/doc/effective_go)
+- [Google Go Style Guide](https://google.github.io/styleguide/go/)
+- [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments)
+- [Go Proverbs](https://go-proverbs.github.io/)

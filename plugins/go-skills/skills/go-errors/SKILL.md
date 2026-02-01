@@ -133,6 +133,72 @@ func (e *QueryError) Unwrap() error {
 }
 ```
 
+## Errors as Values
+
+Errors are programmable values — use patterns to reduce repetitive `if err != nil`:
+
+```go
+// ErrorWriter: accumulates error, check once at end
+type ErrorWriter struct {
+    w   io.Writer
+    err error
+}
+
+func (ew *ErrorWriter) Write(buf []byte) {
+    if ew.err != nil { return }
+    _, ew.err = ew.w.Write(buf)
+}
+
+// Usage — chain writes, check once
+ew := &ErrorWriter{w: w}
+ew.Write(header)
+ew.Write(body)
+ew.Write(footer)
+if ew.err != nil {
+    return ew.err
+}
+```
+
+## No In-Band Errors
+
+```go
+// BAD: -1 or empty string as error signal
+func Lookup(key string) string {
+    if _, ok := m[key]; !ok { return "" }  // "" might be valid!
+    return m[key]
+}
+
+// GOOD: return additional value
+func Lookup(key string) (string, bool) {
+    v, ok := m[key]
+    return v, ok
+}
+
+// GOOD: return error
+func Lookup(key string) (string, error) {
+    v, ok := m[key]
+    if !ok { return "", ErrNotFound }
+    return v, nil
+}
+```
+
+## Handle Every Error
+
+```go
+// BAD: silently ignored
+f.Close()
+
+// GOOD: handle or explicitly acknowledge
+if err := f.Close(); err != nil {
+    log.Printf("closing file: %v", err)
+}
+
+// OK: documented why it's safe to ignore
+n, _ := buf.Write(data) // bytes.Buffer.Write never returns error
+```
+
+---
+
 ## Handling Patterns
 
 ### The Standard Pattern
