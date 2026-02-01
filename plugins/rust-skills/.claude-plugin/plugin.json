@@ -3,6 +3,7 @@
   "description": "Comprehensive Rust guidelines — 11 focused skills covering core guidelines, unsafe/FFI, async/concurrency, performance, and domain-specific patterns for web, cloud-native, CLI, fintech, embedded, IoT, and ML.",
   "version": "2.0.0",
   "author": {
-    "name": "OdinPanel"
+    "name": "Raul P.",
+    "url": "https://github.com/peixotorms"
   }
 }

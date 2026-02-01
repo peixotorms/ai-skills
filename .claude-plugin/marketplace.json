@@ -3,7 +3,8 @@
   "name": "odinlayer-skills",
   "description": "AI skills and tools for Claude Code — curated development guidelines, review commands, and coding standards.",
   "owner": {
-    "name": "peixotorms"
+    "name": "Raul P.",
+    "url": "https://github.com/peixotorms"
   },
   "plugins": [
     {
@@ -11,7 +12,7 @@
       "description": "Comprehensive Rust guidelines — 11 focused skills covering core guidelines, unsafe/FFI, async/concurrency, performance, and domain-specific patterns for web, cloud-native, CLI, fintech, embedded, IoT, and ML.",
       "version": "2.0.0",
       "author": {
-        "name": "OdinPanel"
+        "name": "Raul P."
       },
       "source": "./plugins/rust-skills",
       "category": "development"
@@ -21,7 +22,7 @@
       "description": "Comprehensive Go guidelines — focused skills covering core idioms, concurrency patterns, and error handling based on Effective Go.",
       "version": "1.0.0",
       "author": {
-        "name": "OdinPanel"
+        "name": "Raul P."
       },
       "source": "./plugins/go-skills",
       "category": "development"
