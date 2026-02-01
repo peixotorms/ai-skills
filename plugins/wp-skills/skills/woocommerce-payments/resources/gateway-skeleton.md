@@ -85,11 +85,47 @@ class MCE_Gateway extends WC_Payment_Gateway {
 
 ---
 
-## Tokenization (Saved Cards)
+## Full Block Checkout Server-Side Class
 
-Extend `WC_Payment_Gateway_CC` (credit cards) or `WC_Payment_Gateway_eCheck` for
-built-in tokenization UI. Add `'tokenization'` to `$this->supports` and implement
-`add_payment_method()`.
+```php
+use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+
+class MCE_Block_Gateway extends AbstractPaymentMethodType {
+    protected $name = 'mce_gateway';
+
+    public function initialize(): void {
+        $this->settings = get_option( 'woocommerce_mce_gateway_settings', array() );
+    }
+
+    public function is_active(): bool {
+        return ! empty( $this->settings['enabled'] ) && 'yes' === $this->settings['enabled'];
+    }
+
+    public function get_payment_method_script_handles(): array {
+        wp_register_script(
+            'mce-gateway-block',
+            plugins_url( 'assets/js/block.js', MCE_PLUGIN_FILE ),
+            array(),
+            '1.0.0',
+            true
+        );
+        return array( 'mce-gateway-block' );
+    }
+
+    public function get_payment_method_data(): array {
+        return array(
+            'title'       => $this->settings['title'] ?? '',
+            'description' => $this->settings['description'] ?? '',
+            'supports'    => array( 'products' ),
+        );
+    }
+}
+
+// Register with WooCommerce Blocks.
+add_action( 'woocommerce_blocks_payment_method_type_registration', function ( $registry ): void {
+    $registry->register( new MCE_Block_Gateway() );
+} );
+```
 
 ---
 

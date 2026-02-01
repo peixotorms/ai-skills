@@ -127,13 +127,13 @@ One install gives you all 5 skills. Claude loads only the relevant ones per conv
 
 ### wp-skills
 
-**Comprehensive WordPress, WooCommerce, and Elementor guidelines** — 14 focused skills covering the full WordPress ecosystem.
+**Comprehensive WordPress, WooCommerce, and Elementor guidelines** — 17 focused skills covering the full WordPress ecosystem.
 
 ```bash
 claude plugin install wp-skills
 ```
 
-One install gives you all 14 skills. Claude loads only the relevant ones per conversation based on what you're working on.
+One install gives you all 17 skills. Claude loads only the relevant ones per conversation based on what you're working on.
 
 **WordPress Core (8 skills):**
 
@@ -148,11 +148,14 @@ One install gives you all 14 skills. Claude loads only the relevant ones per con
 | `wp-apis` | Working with WordPress core APIs in plugins or themes — admin menus, shortcodes, meta boxes, custom post types, taxonomies, HTTP API, WP-Cron, dashboard widgets, users and roles, privacy (GDPR), theme mods and Customizer, Site Health, global variables, responsive images, advanced hooks |
 | `wp-javascript` | Using JavaScript in WordPress — script enqueuing, wp_localize_script, wp_add_inline_script, AJAX handlers (wp_ajax_), Heartbeat API, wp.apiFetch, jQuery noConflict, wp.template, defer/async loading strategies |
 
-**WooCommerce (1 skill):**
+**WooCommerce (4 skills):**
 
 | Skill | Auto-activates when... |
 |-------|------------------------|
-| `woocommerce-extensions` | Building WooCommerce extensions — payment gateways, DI container, HPOS order storage, product/order/customer CRUD, Store API, REST API, block checkout integration, settings pages, custom emails, key hooks, testing conventions, WP-CLI |
+| `woocommerce-setup` | Starting a new WooCommerce extension — plugin headers, WooCommerce availability check, FeaturesUtil compatibility declarations (HPOS, block checkout), DI container |
+| `woocommerce-payments` | Building payment gateways — WC_Payment_Gateway, process_payment, process_refund, tokenization, block checkout (AbstractPaymentMethodType, registerPaymentMethod) |
+| `woocommerce-data` | Working with WooCommerce data — HPOS order storage, wc_get_order, wc_get_orders, product/customer CRUD, Store API, REST API, ExtendSchema |
+| `woocommerce-hooks` | Hooking into WooCommerce events — order lifecycle, cart/checkout, product, email, admin hooks, settings pages, custom emails, WP-CLI, testing |
 
 **Elementor (5 skills):**
 
