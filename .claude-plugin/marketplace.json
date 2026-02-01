@@ -46,6 +46,16 @@
       },
       "source": "./plugins/wp-skills",
       "category": "development"
+    },
+    {
+      "name": "compliance-skills",
+      "description": "Compliance coding guidelines — 3 focused skills covering PCI DSS payment security, GDPR data protection, and WCAG accessibility with practical coding patterns.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Raul P."
+      },
+      "source": "./plugins/compliance-skills",
+      "category": "development"
     }
   ]
 }

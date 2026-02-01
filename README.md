@@ -13,6 +13,7 @@ claude plugin install rust-skills
 claude plugin install go-skills
 claude plugin install php-skills
 claude plugin install wp-skills
+claude plugin install compliance-skills
 ```
 
 ## Available Plugins
@@ -177,6 +178,39 @@ One install gives you all 14 skills. Claude loads only the relevant ones per con
 - [WordPress Developer Resources](https://developer.wordpress.org/)
 - [WooCommerce CLAUDE.md](https://github.com/woocommerce/woocommerce/blob/trunk/CLAUDE.md)
 - [Elementor Developer Docs](https://developers.elementor.com/docs/) (294 pages)
+
+---
+
+### compliance-skills
+
+**Compliance coding guidelines** — 3 focused skills covering PCI DSS, GDPR, and WCAG accessibility standards with practical coding patterns.
+
+```bash
+claude plugin install compliance-skills
+```
+
+One install gives you all 3 skills. Claude loads only the relevant ones per conversation based on what you're working on.
+
+**Skills included:**
+
+| Skill | Auto-activates when... |
+|-------|------------------------|
+| `pci-compliance` | Building payment processing, handling credit card data, checkout flows, tokenization, or any code touching cardholder information — PCI DSS data classification, encryption, audit logging, scope reduction |
+| `gdpr-compliance` | Handling personal data, user registration, consent forms, cookie banners, data export, account deletion, privacy policies, or processing EU/EEA user data — consent management, data subject rights, privacy by design |
+| `accessibility-compliance` | Building web interfaces, HTML templates, forms, navigation, modals, dynamic content, or any user-facing UI — WCAG 2.1/2.2, ARIA roles, semantic HTML, keyboard navigation, screen reader support, color contrast |
+
+**Command included:**
+
+| Command | Description |
+|---------|-------------|
+| `/compliance-review` | Review code against applicable compliance standards (PCI DSS, GDPR, WCAG). Usage: `/compliance-review src/checkout/` |
+
+**Sources:**
+
+- [PCI DSS v4.0](https://www.pcisecuritystandards.org/document_library/) (PCI Security Standards Council)
+- [GDPR Full Text](https://gdpr-info.eu/) (EU Regulation 2016/679)
+- [WCAG 2.1](https://www.w3.org/TR/WCAG21/) / [WCAG 2.2](https://www.w3.org/TR/WCAG22/) (W3C)
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 
 ## Managing Plugins
 
