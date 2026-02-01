@@ -13,7 +13,6 @@ claude plugin install rust-skills
 claude plugin install go-skills
 claude plugin install php-skills
 claude plugin install wp-skills
-claude plugin install elementor-skills
 ```
 
 ## Available Plugins
@@ -127,15 +126,15 @@ One install gives you all 5 skills. Claude loads only the relevant ones per conv
 
 ### wp-skills
 
-**Comprehensive WordPress guidelines** — 9 focused skills covering coding standards, security, performance, Gutenberg blocks, REST API with Abilities API, plugin development, core WordPress APIs, JavaScript and AJAX, and WooCommerce extension development.
+**Comprehensive WordPress, WooCommerce, and Elementor guidelines** — 14 focused skills covering the full WordPress ecosystem.
 
 ```bash
 claude plugin install wp-skills
 ```
 
-One install gives you all 9 skills. Claude loads only the relevant ones per conversation based on what you're working on.
+One install gives you all 14 skills. Claude loads only the relevant ones per conversation based on what you're working on.
 
-**Skills included:**
+**WordPress Core (8 skills):**
 
 | Skill | Auto-activates when... |
 |-------|------------------------|
@@ -147,53 +146,37 @@ One install gives you all 9 skills. Claude loads only the relevant ones per conv
 | `wp-plugins` | Building WordPress plugins or themes — architecture, lifecycle hooks, settings API, data storage, custom tables, WP-CLI commands, PHPStan configuration, PHPCS, testing, build and deploy workflow |
 | `wp-apis` | Working with WordPress core APIs in plugins or themes — admin menus, shortcodes, meta boxes, custom post types, taxonomies, HTTP API, WP-Cron, dashboard widgets, users and roles, privacy (GDPR), theme mods and Customizer, Site Health, global variables, responsive images, advanced hooks |
 | `wp-javascript` | Using JavaScript in WordPress — script enqueuing, wp_localize_script, wp_add_inline_script, AJAX handlers (wp_ajax_), Heartbeat API, wp.apiFetch, jQuery noConflict, wp.template, defer/async loading strategies |
-| `wc-extensions` | Building WooCommerce extensions — payment gateways, HPOS order storage, product and order CRUD, Store API, REST API, block checkout integration, settings pages, custom emails, key hooks, WP-CLI |
 
-**Command included:**
+**WooCommerce (1 skill):**
+
+| Skill | Auto-activates when... |
+|-------|------------------------|
+| `woocommerce-extensions` | Building WooCommerce extensions — payment gateways, DI container, HPOS order storage, product/order/customer CRUD, Store API, REST API, block checkout integration, settings pages, custom emails, key hooks, testing conventions, WP-CLI |
+
+**Elementor (5 skills):**
+
+| Skill | Auto-activates when... |
+|-------|------------------------|
+| `elementor-development` | Building Elementor addons or widgets — addon structure, widget lifecycle, rendering, controls, dependencies, caching, inline editing, manager registration, scripts & styles |
+| `elementor-controls` | Using Elementor editor controls — 56+ control types (text, select, color, slider, media, repeater, etc.), group controls (typography, background, border, box-shadow), selectors, responsive controls, dynamic content |
+| `elementor-hooks` | Working with Elementor hooks — PHP action hooks, PHP filter hooks, JS hooks & commands, injecting controls into existing widgets |
+| `elementor-forms` | Extending Elementor Pro forms — form actions, custom field types, validation, rendering, dependencies, content templates |
+| `elementor-themes` | Building with Elementor theme features — theme builder locations, conditions, dynamic tags, Hello Elementor theme, Finder categories, context menu extensions |
+
+**Commands included:**
 
 | Command | Description |
 |---------|-------------|
 | `/wp-review` | Review WordPress code against coding standards, security, and performance guidelines. Usage: `/wp-review wp-content/plugins/my-plugin/` |
+| `/elementor-review` | Review Elementor addon code against development guidelines. Usage: `/elementor-review wp-content/plugins/my-addon/` |
 
 **Sources:**
 
 - [WordPress Coding Standards (WPCS)](https://github.com/WordPress/WordPress-Coding-Standards)
 - [WordPress Agent Skills](https://github.com/WordPress/agent-skills)
-- [elvis/claude-wordpress-skills](https://github.com/elvismdev/claude-wordpress-skills)
 - [WordPress Developer Resources](https://developer.wordpress.org/)
-
----
-
-### elementor-skills
-
-**Comprehensive Elementor guidelines** — 5 focused skills covering addon/widget development, 56+ editor controls, hooks reference, form extensions, and theme builder with dynamic tags.
-
-```bash
-claude plugin install elementor-skills
-```
-
-One install gives you all 5 skills. Claude loads only the relevant ones per conversation based on what you're working on.
-
-**Skills included:**
-
-| Skill | Auto-activates when... |
-|-------|------------------------|
-| `elementor-development` | Building Elementor addons or widgets — addon structure, widget lifecycle, rendering, controls, dependencies, caching, inline editing, manager registration, CLI commands, scripts & styles, data structure, deprecation handling |
-| `elementor-controls` | Using Elementor editor controls — 56+ control types (text, select, color, slider, media, repeater, etc.), group controls (typography, background, border, box-shadow), selectors, responsive controls, conditional display, dynamic content, AI integration |
-| `elementor-hooks` | Working with Elementor hooks — PHP action hooks, PHP filter hooks, JS hooks & commands, injecting controls into existing widgets |
-| `elementor-forms` | Extending Elementor Pro forms — form actions, custom field types, validation, rendering, dependencies, content templates |
-| `elementor-themes` | Building with Elementor theme features — theme builder locations, conditions, dynamic tags, Hello Elementor theme, Finder categories, context menu extensions, hosting integration |
-
-**Command included:**
-
-| Command | Description |
-|---------|-------------|
-| `/elementor-review` | Review Elementor addon code against development guidelines. Usage: `/elementor-review wp-content/plugins/my-addon/` |
-
-**Sources:**
-
+- [WooCommerce CLAUDE.md](https://github.com/woocommerce/woocommerce/blob/trunk/CLAUDE.md)
 - [Elementor Developer Docs](https://developers.elementor.com/docs/) (294 pages)
-- [Elementor GitHub](https://github.com/elementor/elementor)
 
 ## Managing Plugins
 

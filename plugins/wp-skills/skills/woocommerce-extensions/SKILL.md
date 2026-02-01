@@ -1,5 +1,5 @@
 ---
-name: wc-extensions
+name: woocommerce-extensions
 description: Use when building WooCommerce extensions or integrating with WooCommerce — payment gateways, HPOS order storage, product and order CRUD, Store API, REST API, block checkout, data stores, settings pages, and key hooks.
 ---
 
