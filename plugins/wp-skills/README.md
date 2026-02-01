@@ -15,6 +15,7 @@ Comprehensive WordPress guidelines as focused Claude Code skills, plus a review 
 | `wp-rest-api` | Route registration, WP_REST_Controller, JSON Schema validation, permission callbacks, authentication, response shaping, field registration, CPT/taxonomy REST exposure, Abilities API (WordPress 6.9+), error handling |
 | `wp-plugins` | Plugin architecture, lifecycle hooks (activation/deactivation/uninstall), Settings API, data storage, custom tables with dbDelta, WP-CLI commands and operations, PHPStan configuration, PHPCS setup, testing, build and deploy |
 | `wp-apis` | WordPress core APIs for plugin/theme development — admin menus, shortcodes, meta boxes, custom post types, taxonomies, HTTP API, WP-Cron scheduling, dashboard widgets, users and roles, privacy (GDPR), theme mods and Customizer, Site Health, global variables, responsive images, advanced hooks |
+| `wp-javascript` | JavaScript and AJAX in WordPress — script enqueuing (wp_enqueue_script), passing data to JS (wp_localize_script, wp_add_inline_script), AJAX handlers (wp_ajax_), Heartbeat API, wp.apiFetch, jQuery noConflict patterns, wp.template, loading strategies (defer/async) |
 | `wc-extensions` | WooCommerce extension development — payment gateways (WC_Payment_Gateway), HPOS order storage, product and order CRUD, Store API, REST API, block checkout integration, settings pages, custom emails, key hooks reference, WP-CLI commands |
 
 **Command:**
