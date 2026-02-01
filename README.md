@@ -12,6 +12,7 @@ claude plugin marketplace add peixotorms/odinlayer-skills
 claude plugin install rust-skills
 claude plugin install go-skills
 claude plugin install php-skills
+claude plugin install wp-skills
 ```
 
 ## Available Plugins
@@ -120,6 +121,42 @@ One install gives you all 5 skills. Claude loads only the relevant ones per conv
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 - [PHP The Right Way](https://phptherightway.com/)
 - PHP 8.0-8.5 Migration Guides
+
+---
+
+### wp-skills
+
+**Comprehensive WordPress guidelines** — 6 focused skills covering coding standards, security, performance, Gutenberg blocks, REST API with Abilities API, and plugin development.
+
+```bash
+claude plugin install wp-skills
+```
+
+One install gives you all 6 skills. Claude loads only the relevant ones per conversation based on what you're working on.
+
+**Skills included:**
+
+| Skill | Auto-activates when... |
+|-------|------------------------|
+| `wp-guidelines` | Writing, reviewing, or refactoring WordPress PHP code — naming conventions, hooks, i18n, enqueuing, Yoda conditions, WordPress API usage, formatting, deprecated functions |
+| `wp-security` | Handling user input, database queries, file operations, authentication, or output in WordPress — escaping, nonces, sanitization, SQL safety, capabilities, file uploads, AJAX security, REST API permissions |
+| `wp-performance` | Optimizing WordPress performance, debugging slow queries, configuring caching, reviewing database code — WP_Query optimization, object cache, transients, anti-patterns, profiling, platform-specific guidance |
+| `wp-blocks` | Building Gutenberg blocks, block themes, or using the Interactivity API — block.json, static and dynamic rendering, InnerBlocks, deprecations, theme.json, templates, patterns, data-wp-* directives, server-side rendering, WordPress 6.9 features |
+| `wp-rest-api` | Building WordPress REST API endpoints, custom routes, controllers, or using the Abilities API — route registration, schema validation, permission callbacks, authentication, response shaping, field registration, Abilities API for declarative permissions |
+| `wp-plugins` | Building WordPress plugins or themes — architecture, lifecycle hooks, settings API, data storage, custom tables, WP-CLI commands, PHPStan configuration, PHPCS, testing, build and deploy workflow |
+
+**Command included:**
+
+| Command | Description |
+|---------|-------------|
+| `/wp-review` | Review WordPress code against coding standards, security, and performance guidelines. Usage: `/wp-review wp-content/plugins/my-plugin/` |
+
+**Sources:**
+
+- [WordPress Coding Standards (WPCS)](https://github.com/WordPress/WordPress-Coding-Standards)
+- [WordPress Agent Skills](https://github.com/WordPress/agent-skills)
+- [elvis/claude-wordpress-skills](https://github.com/elvismdev/claude-wordpress-skills)
+- [WordPress Developer Resources](https://developer.wordpress.org/)
 
 ## Managing Plugins
 

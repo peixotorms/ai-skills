@@ -36,6 +36,16 @@
       },
       "source": "./plugins/php-skills",
       "category": "development"
+    },
+    {
+      "name": "wp-skills",
+      "description": "Comprehensive WordPress guidelines — 6 focused skills covering coding standards, security, performance, Gutenberg blocks, REST API with Abilities API, and plugin development.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Raul P."
+      },
+      "source": "./plugins/wp-skills",
+      "category": "development"
     }
   ]
 }
