@@ -8,9 +8,9 @@ Idiomatic Go guidelines as focused Claude Code skills, plus a review command.
 
 | Skill | Focus |
 |-------|-------|
-| `go-guidelines` | Formatting, naming, control structures, functions, defer, data types (slices, maps), methods, interfaces, embedding, initialization, anti-patterns |
-| `go-concurrency` | Goroutines, channels, select, worker pools, fan-out/fan-in, sync primitives, context cancellation |
-| `go-errors` | Error interface, wrapping with `%w`, `errors.Is`/`errors.As`, sentinel errors, custom types, panic/recover |
+| `go-guidelines` | Formatting, naming, doc comments, control structures, functions, defer, data types (slices, maps), methods, interfaces, embedding, initialization, functional options, generics, testing, linting, design principles, anti-patterns |
+| `go-concurrency` | Goroutines, channels, select, worker pools, fan-out/fan-in, sync primitives, context rules, cancellation patterns |
+| `go-errors` | Error interface, wrapping with `%w`, `errors.Is`/`errors.As`, sentinel errors, custom types, errors-as-values patterns, panic/recover |
 
 **Command:**
 

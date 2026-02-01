@@ -56,7 +56,7 @@ One install gives you all 11 skills. Claude loads only the relevant ones per con
 
 ### go-skills
 
-**Idiomatic Go guidelines** — 3 focused skills based on Effective Go covering core idioms, concurrency, and error handling.
+**Idiomatic Go guidelines** — 3 focused skills covering core idioms, concurrency patterns, and error handling.
 
 ```bash
 claude plugin install go-skills
@@ -68,9 +68,9 @@ One install gives you all 3 skills. Claude loads only the relevant ones per conv
 
 | Skill | Auto-activates when... |
 |-------|------------------------|
-| `go-guidelines` | Writing or reviewing any Go code — formatting, naming, control structures, functions, defer, data types, methods, interfaces, embedding, initialization |
-| `go-concurrency` | Writing concurrent Go with goroutines, channels, select, sync primitives, worker pools |
-| `go-errors` | Handling errors — wrapping, `errors.Is`/`errors.As`, sentinel errors, custom types, panic/recover |
+| `go-guidelines` | Writing or reviewing any Go code — formatting, naming, doc comments, control structures, functions, defer, data types, methods, interfaces, embedding, initialization, functional options, generics, testing, linting, design principles, anti-patterns |
+| `go-concurrency` | Writing concurrent Go with goroutines, channels, select, sync primitives, worker pools, fan-out/fan-in, context cancellation |
+| `go-errors` | Handling errors — wrapping, `errors.Is`/`errors.As`, sentinel errors, custom types, errors-as-values patterns, panic/recover |
 
 **Command included:**
 
@@ -78,7 +78,12 @@ One install gives you all 3 skills. Claude loads only the relevant ones per conv
 |---------|-------------|
 | `/go-review` | Review any Go file against the guidelines. Usage: `/go-review main.go` |
 
-**Source:** [Effective Go](https://go.dev/doc/effective_go)
+**Sources:**
+
+- [Effective Go](https://go.dev/doc/effective_go)
+- [Google Go Style Guide](https://google.github.io/styleguide/go/)
+- [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments)
+- [Go Proverbs](https://go-proverbs.github.io/)
 
 ## Managing Plugins
 
