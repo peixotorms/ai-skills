@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "ai-skills",
+  "name": "odinlayer-skills",
   "description": "AI skills and tools for Claude Code — curated development guidelines, review commands, and coding standards.",
   "owner": {
     "name": "peixotorms"

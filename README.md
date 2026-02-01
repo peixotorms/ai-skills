@@ -6,7 +6,7 @@ A curated collection of [Claude Code](https://docs.anthropic.com/en/docs/claude-
 
 ```bash
 # 1. Add this marketplace (one-time setup)
-claude plugin marketplace add peixotorms/ai-skills
+claude plugin marketplace add peixotorms/odinlayer-skills
 
 # 2. Install the plugins you want
 claude plugin install rust-skills
@@ -47,7 +47,7 @@ Based on [Microsoft Pragmatic Rust Guidelines](https://microsoft.github.io/rust-
 
 ```bash
 # Update all marketplace plugins
-claude plugin marketplace update ai-skills
+claude plugin marketplace update odinlayer-skills
 
 # List installed plugins
 claude plugin list
@@ -60,7 +60,7 @@ claude plugin enable rust-skills
 claude plugin uninstall rust-skills
 
 # Remove the marketplace entirely
-claude plugin marketplace remove ai-skills
+claude plugin marketplace remove odinlayer-skills
 ```
 
 ## Contributing
