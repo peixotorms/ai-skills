@@ -183,13 +183,13 @@ One install gives you all 14 skills. Claude loads only the relevant ones per con
 
 ### compliance-skills
 
-**Compliance coding guidelines** — 3 focused skills covering PCI DSS, GDPR, and WCAG accessibility standards with practical coding patterns.
+**Compliance coding guidelines** — 6 focused skills covering PCI DSS, GDPR, WCAG accessibility, HIPAA, SOX, and SOC 2 with practical coding patterns.
 
 ```bash
 claude plugin install compliance-skills
 ```
 
-One install gives you all 3 skills. Claude loads only the relevant ones per conversation based on what you're working on.
+One install gives you all 6 skills. Claude loads only the relevant ones per conversation based on what you're working on.
 
 **Skills included:**
 
@@ -198,12 +198,15 @@ One install gives you all 3 skills. Claude loads only the relevant ones per conv
 | `pci-compliance` | Building payment processing, handling credit card data, checkout flows, tokenization, or any code touching cardholder information — PCI DSS data classification, encryption, audit logging, scope reduction |
 | `gdpr-compliance` | Handling personal data, user registration, consent forms, cookie banners, data export, account deletion, privacy policies, or processing EU/EEA user data — consent management, data subject rights, privacy by design |
 | `accessibility-compliance` | Building web interfaces, HTML templates, forms, navigation, modals, dynamic content, or any user-facing UI — WCAG 2.1/2.2, ARIA roles, semantic HTML, keyboard navigation, screen reader support, color contrast |
+| `hipaa-compliance` | Handling health data, patient records, medical systems, ePHI, healthcare APIs, EHR integrations, or any code processing Protected Health Information — HIPAA Security Rule, PHI identification, de-identification, audit controls |
+| `sox-compliance` | Building financial reporting systems, accounting software, ERP integrations, ledger systems, audit trails, or any code handling financial data at publicly traded companies — SOX Section 302/404, ITGC, segregation of duties |
+| `soc2-compliance` | Building SaaS platforms, cloud services, customer-facing APIs, multi-tenant systems, or any service requiring SOC 2 certification — Trust Services Criteria, Common Criteria CC1-CC9, access controls, change management |
 
 **Command included:**
 
 | Command | Description |
 |---------|-------------|
-| `/compliance-review` | Review code against applicable compliance standards (PCI DSS, GDPR, WCAG). Usage: `/compliance-review src/checkout/` |
+| `/compliance-review` | Review code against applicable compliance standards (PCI, GDPR, WCAG, HIPAA, SOX, SOC 2). Usage: `/compliance-review src/checkout/` |
 
 **Sources:**
 
@@ -211,6 +214,9 @@ One install gives you all 3 skills. Claude loads only the relevant ones per conv
 - [GDPR Full Text](https://gdpr-info.eu/) (EU Regulation 2016/679)
 - [WCAG 2.1](https://www.w3.org/TR/WCAG21/) / [WCAG 2.2](https://www.w3.org/TR/WCAG22/) (W3C)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
+- [HHS HIPAA Security Rule](https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html)
+- [COSO Internal Control Framework](https://www.coso.org/guidance-on-ic)
+- [AICPA Trust Services Criteria](https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2)
 
 ## Managing Plugins
 

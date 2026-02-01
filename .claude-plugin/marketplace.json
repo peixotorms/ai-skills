@@ -49,8 +49,8 @@
     },
     {
       "name": "compliance-skills",
-      "description": "Compliance coding guidelines — 3 focused skills covering PCI DSS payment security, GDPR data protection, and WCAG accessibility with practical coding patterns.",
-      "version": "1.0.0",
+      "description": "Compliance coding guidelines — 6 focused skills covering PCI DSS, GDPR, WCAG accessibility, HIPAA healthcare, SOX financial controls, and SOC 2 trust services with practical coding patterns.",
+      "version": "1.1.0",
       "author": {
         "name": "Raul P."
       },

@@ -1,6 +1,6 @@
 ---
 name: compliance-review
-description: Review code against compliance standards (PCI DSS, GDPR, WCAG accessibility)
+description: Review code against compliance standards (PCI DSS, GDPR, WCAG, HIPAA, SOX, SOC 2)
 arguments:
   - name: path
     description: File or directory to review
@@ -20,11 +20,17 @@ Review the code at `$ARGUMENTS` against applicable compliance standards.
    - **PCI DSS** — if code handles payments, card data, checkout, tokenization, or payment gateway integration
    - **GDPR** — if code handles personal data, user registration, consent, cookies, data export, account deletion, or serves EU users
    - **WCAG** — if code generates HTML, renders UI, handles forms, navigation, or dynamic content
+   - **HIPAA** — if code handles health data, patient records, ePHI, medical systems, EHR, or healthcare APIs
+   - **SOX** — if code handles financial reporting, accounting, ledger entries, audit trails, or runs at a publicly traded company
+   - **SOC 2** — if code is part of a SaaS platform, cloud service, or multi-tenant system handling customer data
 
 3. **For each applicable standard**, review against the corresponding skill:
    - `pci-compliance` — check data classification, tokenization, encryption, access control, audit logging, scope
    - `gdpr-compliance` — check consent management, data subject rights, privacy by design, retention, breach handling
    - `accessibility-compliance` — check semantic HTML, ARIA usage, keyboard navigation, color contrast, forms, media
+   - `hipaa-compliance` — check PHI handling, de-identification, audit controls, transmission security, BAA requirements
+   - `sox-compliance` — check audit trails, segregation of duties, change management, data integrity, access controls
+   - `soc2-compliance` — check access controls, encryption, logging, change management, incident response, vendor management
 
 4. **Report findings** grouped by standard:
 
