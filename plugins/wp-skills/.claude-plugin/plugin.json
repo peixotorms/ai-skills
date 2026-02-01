@@ -1,7 +1,7 @@
 {
   "name": "wp-skills",
-  "description": "Comprehensive WordPress guidelines — 6 focused skills covering coding standards, security, performance, Gutenberg blocks, REST API, and plugin development.",
-  "version": "1.0.0",
+  "description": "Comprehensive WordPress guidelines — 7 focused skills covering coding standards, security, performance, Gutenberg blocks, REST API, plugin development, and core WordPress APIs.",
+  "version": "1.1.0",
   "author": {
     "name": "Raul P.",
     "url": "https://github.com/peixotorms"
