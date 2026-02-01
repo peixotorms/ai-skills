@@ -13,6 +13,7 @@ claude plugin install rust-skills
 claude plugin install go-skills
 claude plugin install php-skills
 claude plugin install wp-skills
+claude plugin install elementor-skills
 ```
 
 ## Available Plugins
@@ -157,6 +158,39 @@ One install gives you all 6 skills. Claude loads only the relevant ones per conv
 - [WordPress Agent Skills](https://github.com/WordPress/agent-skills)
 - [elvis/claude-wordpress-skills](https://github.com/elvismdev/claude-wordpress-skills)
 - [WordPress Developer Resources](https://developer.wordpress.org/)
+
+---
+
+### elementor-skills
+
+**Comprehensive Elementor guidelines** — 5 focused skills covering addon/widget development, 56+ editor controls, hooks reference, form extensions, and theme builder with dynamic tags.
+
+```bash
+claude plugin install elementor-skills
+```
+
+One install gives you all 5 skills. Claude loads only the relevant ones per conversation based on what you're working on.
+
+**Skills included:**
+
+| Skill | Auto-activates when... |
+|-------|------------------------|
+| `elementor-development` | Building Elementor addons or widgets — addon structure, widget lifecycle, rendering, controls, dependencies, caching, inline editing, manager registration, CLI commands, scripts & styles, data structure, deprecation handling |
+| `elementor-controls` | Using Elementor editor controls — 56+ control types (text, select, color, slider, media, repeater, etc.), group controls (typography, background, border, box-shadow), selectors, responsive controls, conditional display, dynamic content, AI integration |
+| `elementor-hooks` | Working with Elementor hooks — PHP action hooks, PHP filter hooks, JS hooks & commands, injecting controls into existing widgets |
+| `elementor-forms` | Extending Elementor Pro forms — form actions, custom field types, validation, rendering, dependencies, content templates |
+| `elementor-themes` | Building with Elementor theme features — theme builder locations, conditions, dynamic tags, Hello Elementor theme, Finder categories, context menu extensions, hosting integration |
+
+**Command included:**
+
+| Command | Description |
+|---------|-------------|
+| `/elementor-review` | Review Elementor addon code against development guidelines. Usage: `/elementor-review wp-content/plugins/my-addon/` |
+
+**Sources:**
+
+- [Elementor Developer Docs](https://developers.elementor.com/docs/) (294 pages)
+- [Elementor GitHub](https://github.com/elementor/elementor)
 
 ## Managing Plugins
 

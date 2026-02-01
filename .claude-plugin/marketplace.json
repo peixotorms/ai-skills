@@ -46,6 +46,16 @@
       },
       "source": "./plugins/wp-skills",
       "category": "development"
+    },
+    {
+      "name": "elementor-skills",
+      "description": "Comprehensive Elementor guidelines — 5 focused skills covering addon/widget development, 56+ editor controls, hooks reference, form extensions, and theme builder with dynamic tags.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Raul P."
+      },
+      "source": "./plugins/elementor-skills",
+      "category": "development"
     }
   ]
 }
