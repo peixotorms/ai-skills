@@ -10,6 +10,7 @@ claude plugin marketplace add peixotorms/odinlayer-skills
 
 # 2. Install the plugins you want
 claude plugin install rust-skills
+claude plugin install go-skills
 ```
 
 ## Available Plugins
@@ -50,6 +51,34 @@ One install gives you all 11 skills. Claude loads only the relevant ones per con
 
 - [Microsoft Pragmatic Rust Guidelines](https://microsoft.github.io/rust-guidelines/) (48 production rules)
 - [ZhangHanDong/rust-skills](https://github.com/ZhangHanDong/rust-skills) (community patterns for ownership, concurrency, type-driven design, domain modeling)
+
+---
+
+### go-skills
+
+**Idiomatic Go guidelines** — 3 focused skills based on Effective Go covering core idioms, concurrency, and error handling.
+
+```bash
+claude plugin install go-skills
+```
+
+One install gives you all 3 skills. Claude loads only the relevant ones per conversation.
+
+**Skills included:**
+
+| Skill | Auto-activates when... |
+|-------|------------------------|
+| `go-guidelines` | Writing or reviewing any Go code — formatting, naming, control structures, functions, defer, data types, methods, interfaces, embedding, initialization |
+| `go-concurrency` | Writing concurrent Go with goroutines, channels, select, sync primitives, worker pools |
+| `go-errors` | Handling errors — wrapping, `errors.Is`/`errors.As`, sentinel errors, custom types, panic/recover |
+
+**Command included:**
+
+| Command | Description |
+|---------|-------------|
+| `/go-review` | Review any Go file against the guidelines. Usage: `/go-review main.go` |
+
+**Source:** [Effective Go](https://go.dev/doc/effective_go)
 
 ## Managing Plugins
 
