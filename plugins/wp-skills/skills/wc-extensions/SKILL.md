@@ -75,7 +75,68 @@ add_action( 'before_woocommerce_init', function (): void {
 
 ---
 
-## 2. Payment Gateway API
+## 2. Modern WooCommerce Architecture
+
+### DI Container
+
+WooCommerce `src/` classes use dependency injection. Access singletons with:
+
+```php
+$instance = wc_get_container()->get( \Automattic\WooCommerce\Internal\SomeClass::class );
+```
+
+Extensions can access public WC services through the container. Internal classes
+(`src/Internal/`) are private API and may change without notice — only rely on
+classes in `src/` root or documented APIs.
+
+### Hook Callback Naming Convention
+
+Name hook callbacks `handle_{hook_name}` with `@internal` annotation:
+
+```php
+/**
+ * Handle the woocommerce_order_status_changed hook.
+ *
+ * @internal
+ */
+public function handle_woocommerce_order_status_changed( int $order_id, string $old, string $new ): void {
+    // ...
+}
+```
+
+### Interactivity API Stores Are Private
+
+All WooCommerce Interactivity API stores use `lock: true` — they are **not
+extensible**. Removing or changing store state/selectors is not a breaking
+change. Do not depend on WC store internals in your extension.
+
+### Data Integrity
+
+Always verify entity state before deletion or modification:
+
+```php
+// ✅ Verify order status before deletion.
+$order = wc_get_order( $order_id );
+if ( ! $order || ! in_array( $order->get_status(), array( 'draft', 'checkout-draft' ), true ) ) {
+    return false;  // Don't delete non-draft orders.
+}
+$order->delete( true );
+
+// ✅ Verify ownership in batch operations.
+foreach ( $order_ids as $id ) {
+    $order = wc_get_order( $id );
+    if ( $order && (int) $order->get_customer_id() === get_current_user_id() ) {
+        $order->delete( true );
+    }
+}
+```
+
+**Checklist:** entity exists → correct state → correct owner → race-condition safe
+→ check return value of delete/save.
+
+---
+
+## 3. Payment Gateway API
 
 ### Skeleton
 
@@ -185,7 +246,7 @@ public function validate_fields(): bool {
 
 ---
 
-## 3. HPOS (High-Performance Order Storage)
+## 4. HPOS (High-Performance Order Storage)
 
 Since WooCommerce 8.2, HPOS is the default order storage for new installs.
 Orders are stored in custom tables, not `wp_postmeta`.
@@ -238,7 +299,7 @@ $orders = wc_get_orders( array(
 
 ---
 
-## 4. Product & Customer CRUD
+## 5. Product & Customer CRUD
 
 ### Products
 
@@ -282,7 +343,7 @@ $customer->save();
 
 ---
 
-## 5. Store API (Cart & Checkout)
+## 6. Store API (Cart & Checkout)
 
 The Store API is an **unauthenticated** public REST API for customer-facing
 cart, checkout, and product functionality.
@@ -331,7 +392,7 @@ add_action( 'woocommerce_blocks_loaded', function (): void {
 
 ---
 
-## 6. WooCommerce REST API
+## 7. WooCommerce REST API
 
 The REST API is **authenticated** (consumer key + secret) for admin/back-office operations.
 
@@ -365,7 +426,7 @@ curl https://example.com/wp-json/wc/v3/products \
 
 ---
 
-## 7. Block Checkout Integration
+## 8. Block Checkout Integration
 
 The Block Checkout (default since WooCommerce 8.3) requires separate registration
 from the classic `WC_Payment_Gateway`.
@@ -432,7 +493,7 @@ registerPaymentMethod( MCE_Gateway );
 
 ---
 
-## 8. Settings Page Integration
+## 9. Settings Page Integration
 
 ### Adding a Settings Tab
 
@@ -494,7 +555,7 @@ function mce_get_settings(): array {
 
 ---
 
-## 9. Key Hooks Reference
+## 10. Key Hooks Reference
 
 ### Order Lifecycle
 
@@ -549,7 +610,7 @@ function mce_get_settings(): array {
 
 ---
 
-## 10. Custom Emails
+## 11. Custom Emails
 
 ```php
 add_filter( 'woocommerce_email_classes', function ( array $emails ): array {
@@ -601,7 +662,7 @@ class MCE_Custom_Email extends WC_Email {
 
 ---
 
-## 11. WP-CLI for WooCommerce
+## 12. WP-CLI for WooCommerce
 
 ```bash
 # Products.
@@ -641,7 +702,66 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 ---
 
-## 12. Common Mistakes
+## 13. Testing WooCommerce Extensions
+
+### Base Class and Naming
+
+Extend `WC_Unit_Test_Case`. Name the variable under test `$sut` ("System Under
+Test"). Use `@testdox` in every test docblock:
+
+```php
+declare( strict_types = 1 );
+
+namespace MyExtension\Tests;
+
+use WC_Unit_Test_Case;
+
+class MCE_Order_Sync_Test extends WC_Unit_Test_Case {
+    /** @var MCE_Order_Sync The System Under Test. */
+    private $sut;
+
+    public function setUp(): void {
+        parent::setUp();
+        $this->sut = new \MyExtension\MCE_Order_Sync();
+    }
+
+    /**
+     * @testdox Should sync order when status is processing.
+     */
+    public function test_syncs_processing_order(): void {
+        $order = wc_create_order();
+        $order->set_status( 'processing' );
+        $order->save();
+
+        $result = $this->sut->sync( $order->get_id() );
+
+        $this->assertTrue( $result, 'Processing orders should sync' );
+    }
+}
+```
+
+### Mocking the WC Logger
+
+Inject a fake logger via the `woocommerce_logging_class` filter. Pass an **object**
+(not a class name string) to bypass the internal cache:
+
+```php
+$fake = new class implements \WC_Logger_Interface {
+    public array $warning_calls = [];
+    // Implement all interface methods; track calls in public arrays.
+    public function warning( $message, $context = [] ) { $this->warning_calls[] = $message; }
+    // ...
+};
+
+add_filter( 'woocommerce_logging_class', fn() => $fake );
+$this->sut->do_something_that_warns();
+$this->assertCount( 1, $fake->warning_calls );
+remove_all_filters( 'woocommerce_logging_class' );
+```
+
+---
+
+## 14. Common Mistakes
 
 | Mistake | Fix |
 |---------|-----|
@@ -655,3 +775,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 | Modifying cart totals with direct property access | Use `woocommerce_before_calculate_totals` hook |
 | Direct SQL queries on order tables | Use WC CRUD or `wc_get_orders()` |
 | Not checking if WooCommerce is active | Wrap init in `class_exists('WooCommerce')` check |
+| Standalone functions outside classes | Always use class methods — standalone functions are hard to mock in tests |
+| Using `new` for DI-managed WC classes | Use `wc_get_container()->get( ClassName::class )` for `src/` singletons |
+| `call_user_func_array` with associative keys | Always use positional (numerically indexed) arrays — keys are silently ignored |
+| Deleting orders without verifying status | Check `$order->get_status()` before `$order->delete()` — could delete completed orders |
+| Depending on WC Interactivity API stores | All WC stores are `lock: true` (private) — they can change without notice |
+| Batch operations without per-item validation | Verify each item exists, has correct state, and correct owner before modifying |
