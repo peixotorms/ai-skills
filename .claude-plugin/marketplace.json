@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "odinpanel-skills",
+  "description": "OdinPanel development skills and tools for Claude Code",
+  "owner": {
+    "name": "OdinPanel"
+  },
+  "plugins": [
+    {
+      "name": "rust-skills",
+      "description": "Microsoft Pragmatic Rust Guidelines — 48 rules for production-quality Rust covering API design, safety, error handling, performance, documentation, and library architecture.",
+      "version": "1.0.0",
+      "author": {
+        "name": "OdinPanel"
+      },
+      "source": "./plugins/rust-skills",
+      "category": "development"
+    }
+  ]
+}

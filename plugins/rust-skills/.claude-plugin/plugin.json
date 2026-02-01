@@ -1,6 +1,7 @@
 {
   "name": "rust-skills",
   "description": "Microsoft Pragmatic Rust Guidelines — 48 rules for production-quality Rust covering API design, safety, error handling, performance, documentation, and library architecture.",
+  "version": "1.0.0",
   "author": {
     "name": "OdinPanel"
   }
