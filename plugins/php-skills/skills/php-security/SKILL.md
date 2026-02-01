@@ -11,57 +11,21 @@ description: Use when handling user input, database queries, file operations, au
 
 ## SQL Injection Prevention
 
-### Always Use Prepared Statements
-
-```php
-// GOOD: Parameterized query — safe
-$stmt = $pdo->prepare('SELECT * FROM users WHERE email = ? AND status = ?');
-$stmt->execute([$email, $status]);
-$user = $stmt->fetch();
-
-// GOOD: Named parameters
-$stmt = $pdo->prepare('SELECT * FROM users WHERE id = :id');
-$stmt->execute(['id' => $id]);
-
-// BAD: String interpolation — SQL injection!
-$pdo->query("SELECT * FROM users WHERE id = $id");
-$pdo->query("SELECT * FROM users WHERE name = '$name'");
-```
+Use prepared statements with bound parameters for all queries. Never interpolate user input into SQL strings.
 
 | Rule | Detail |
 |------|--------|
-| Parameters for data only | `WHERE`, `VALUES`, `SET` — not table/column names |
+| Prepared statements only | `WHERE`, `VALUES`, `SET` — parameterize all data values |
 | Table/column names | Validate against whitelist, never user input directly |
 | Least-privilege DB accounts | Don't use root; separate read/write accounts |
 | Use PDO with exceptions | `$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION)` |
 | Disable emulated prepares | `$pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false)` |
 
-### Dynamic Table/Column Names
-
-```php
-// GOOD: Whitelist validation
-$allowed = ['name', 'email', 'created_at'];
-$column = in_array($column, $allowed, true) ? $column : 'name';
-$stmt = $pdo->prepare("SELECT * FROM users ORDER BY {$column}");
-```
+See `resources/validation-patterns.md` for prepared statement and dynamic column name code examples.
 
 ## XSS Prevention
 
-### Output Escaping
-
-```php
-// GOOD: Always escape user data in HTML
-echo htmlspecialchars($userInput, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-// Helper function
-function e(string $value): string {
-    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-}
-
-// In templates
-<p>Hello, <?= e($user->name) ?></p>
-<input value="<?= e($searchQuery) ?>">
-```
+Escape all user data on output. Use `htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')` (or a short `e()` helper) for HTML contexts.
 
 | Context | Escaping |
 |---------|----------|
@@ -71,14 +35,9 @@ function e(string $value): string {
 | URL parameter | `urlencode()` |
 | CSS | Avoid user input in CSS; whitelist if needed |
 
-### Content Security Policy
+Set CSP headers: `Content-Security-Policy: default-src 'self'; script-src 'self'`
 
-```php
-header("Content-Security-Policy: default-src 'self'; script-src 'self'");
-header("X-Content-Type-Options: nosniff");
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 0"); // Disable legacy XSS filter — CSP is better
-```
+See `resources/validation-patterns.md` for output escaping and CSP code examples.
 
 ## CSRF Protection
 
@@ -135,40 +94,7 @@ if (password_needs_rehash($storedHash, PASSWORD_DEFAULT)) {
 
 ## Input Validation & Sanitization
 
-### Validation Filters (FILTER_VALIDATE_*)
-
-```php
-// Email — RFC 822 syntax only (doesn't confirm existence)
-$email = filter_var($input, FILTER_VALIDATE_EMAIL);
-
-// Integer with range
-$age = filter_var($input, FILTER_VALIDATE_INT, [
-    'options' => ['min_range' => 0, 'max_range' => 150]
-]);
-
-// Float with range (PHP 7.4+)
-$price = filter_var($input, FILTER_VALIDATE_FLOAT, [
-    'options' => ['min_range' => 0.01, 'max_range' => 99999.99]
-]);
-
-// IP address — exclude private/reserved ranges
-$ip = filter_var($input, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
-
-// URL — ASCII only (IDN domains always rejected)
-$url = filter_var($input, FILTER_VALIDATE_URL);
-
-// Boolean — "1","true","on","yes" → true; "0","false","off","no" → false
-$flag = filter_var($input, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-
-// Domain (RFC 952/1034)
-$domain = filter_var($input, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME);
-
-// Custom regex
-$code = filter_var($input, FILTER_VALIDATE_REGEXP, ['options' => ['regexp' => '/^[A-Z]{3}-\d{4}$/']]);
-
-// filter_input reads from superglobal directly (safer than $_POST)
-$email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
-```
+Use `filter_var()` / `filter_input()` for type validation. Key filters: `FILTER_VALIDATE_EMAIL`, `FILTER_VALIDATE_INT` (with `min_range`/`max_range`), `FILTER_VALIDATE_FLOAT`, `FILTER_VALIDATE_IP`, `FILTER_VALIDATE_URL`, `FILTER_VALIDATE_BOOL` (with `FILTER_NULL_ON_FAILURE`), `FILTER_VALIDATE_DOMAIN`, `FILTER_VALIDATE_REGEXP`.
 
 ### Sanitization Filters (FILTER_SANITIZE_*)
 
@@ -194,39 +120,7 @@ $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
 | Shell command | `escapeshellcmd($s)` | Less safe — prefer `escapeshellarg` |
 | CSS | Avoid user input; whitelist if needed | |
 
-### Serialization Security
-
-```php
-// NEVER unserialize user input — remote code execution risk!
-// __unserialize()/__wakeup() magic methods execute on deserialization
-// Autoloading can trigger arbitrary code
-
-// BAD
-$data = unserialize($_COOKIE['prefs']);
-
-// GOOD — use JSON for untrusted data
-$data = json_decode($_COOKIE['prefs'], true, 512, JSON_THROW_ON_ERROR);
-
-// If you must use serialized data from storage, verify integrity
-$expected = hash_hmac('sha256', $serialized, $secretKey);
-if (!hash_equals($expected, $providedHmac)) {
-    throw new SecurityException('Tampered data');
-}
-```
-
-### Process Execution Security
-
-```php
-// BEST: Array command format bypasses shell entirely (PHP 7.4+)
-$proc = proc_open(['convert', $inputFile, '-resize', '800x600', $outputFile], $spec, $pipes);
-
-// If shell is needed, escape every argument
-$safe = escapeshellarg($userInput);  // wraps in single quotes
-
-// NEVER pass user input directly to shell functions
-// BAD:  system("convert $file");
-// GOOD: system("convert " . escapeshellarg($file));
-```
+### Key Rules
 
 | Rule | Detail |
 |------|--------|
@@ -240,6 +134,8 @@ $safe = escapeshellarg($userInput);  // wraps in single quotes
 | `FILTER_VALIDATE_URL` ASCII only | IDN domains always fail |
 | Never `unserialize()` user data | Use JSON; verify HMAC for stored serialized data |
 | Array format in `proc_open()` | Bypasses shell entirely — safest option |
+
+See `resources/validation-patterns.md` for filter_var code examples, serialization security, and process execution patterns.
 
 ## File Upload Security
 
@@ -510,3 +406,7 @@ Catches SQL injection, XSS, and other data-flow vulnerabilities that manual revi
 - [ ] cURL: `CURLOPT_SSL_VERIFYPEER` enabled in production
 - [ ] `filter_var()` / `filter_input()` for input validation
 - [ ] Psalm taint analysis in CI (`--taint-analysis`)
+
+## Resources
+
+- `resources/validation-patterns.md` — Detailed code examples for SQL injection prevention, XSS output escaping, input validation filters, serialization security, and process execution security

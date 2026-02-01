@@ -266,6 +266,44 @@ Need interior mutability?
 
 ---
 
+## Resource Lifecycle (RAII)
+
+| Pattern | When | Implementation |
+|---------|------|----------------|
+| RAII | Auto cleanup on scope exit | `Drop` trait |
+| Lazy init | Deferred creation | `OnceLock`, `LazyLock` |
+| Pool | Reuse expensive resources | `r2d2`, `deadpool` |
+| Guard | Scoped access | `MutexGuard` pattern |
+| Scope | Transaction boundary | Custom struct + Drop |
+
+```rust
+// RAII Guard: cleanup on drop
+struct FileGuard { path: PathBuf, _handle: File }
+
+impl Drop for FileGuard {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
+}
+
+// Lazy Singleton (modern Rust — no lazy_static!)
+use std::sync::OnceLock;
+
+static CONFIG: OnceLock<Config> = OnceLock::new();
+
+fn get_config() -> &'static Config {
+    CONFIG.get_or_init(|| Config::load().expect("config required"))
+}
+```
+
+| Anti-Pattern | Why Bad | Better |
+|--------------|---------|--------|
+| Manual cleanup | Easy to forget | RAII/Drop |
+| `lazy_static!` | External dep, deprecated | `std::sync::OnceLock` (1.70+) |
+| Global mutable state | Thread unsafety | `OnceLock` or proper sync |
+
+---
+
 ## Generics & Trait Objects
 
 ### Static vs Dynamic Dispatch
@@ -304,90 +342,6 @@ fn process<T: Display>(x: T) { }
 fn process(x: &dyn Display) { }
 fn process(x: Box<dyn Display>) { }
 ```
-
----
-
-## Domain Modeling
-
-### Domain Concept → Rust Pattern
-
-| DDD Concept | Rust Pattern | Example |
-|-------------|--------------|---------|
-| Value Object | Newtype | `struct Email(String);` |
-| Entity | Struct + ID | `struct User { id: UserId, ... }` |
-| Aggregate | Module boundary | `mod order { ... }` |
-| Repository | Trait | `trait UserRepo { fn find(...) }` |
-| Domain Event | Enum | `enum OrderEvent { Created, ... }` |
-| Service | impl block / free fn | Stateless operations |
-
-```rust
-// Entity: identity equality
-struct UserId(Uuid);
-struct User { id: UserId, email: Email }
-
-impl PartialEq for User {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id // identity, not value
-    }
-}
-
-// Aggregate: parent owns children, enforces invariants
-mod order {
-    pub struct Order {
-        id: OrderId,
-        items: Vec<OrderItem>, // owned children
-    }
-    impl Order {
-        pub fn add_item(&mut self, item: OrderItem) {
-            // enforce aggregate invariants here
-        }
-    }
-}
-```
-
-| Mistake | Why Wrong | Better |
-|---------|-----------|--------|
-| Primitive obsession | No type safety | Newtype wrappers |
-| Public fields with invariants | Invariants violated | Private + validated `new()` |
-| Leaked aggregate internals | Broken encapsulation | Methods on aggregate root |
-
----
-
-## Resource Lifecycle (RAII)
-
-| Pattern | When | Implementation |
-|---------|------|----------------|
-| RAII | Auto cleanup on scope exit | `Drop` trait |
-| Lazy init | Deferred creation | `OnceLock`, `LazyLock` |
-| Pool | Reuse expensive resources | `r2d2`, `deadpool` |
-| Guard | Scoped access | `MutexGuard` pattern |
-| Scope | Transaction boundary | Custom struct + Drop |
-
-```rust
-// RAII Guard: cleanup on drop
-struct FileGuard { path: PathBuf, _handle: File }
-
-impl Drop for FileGuard {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.path);
-    }
-}
-
-// Lazy Singleton (modern Rust — no lazy_static!)
-use std::sync::OnceLock;
-
-static CONFIG: OnceLock<Config> = OnceLock::new();
-
-fn get_config() -> &'static Config {
-    CONFIG.get_or_init(|| Config::load().expect("config required"))
-}
-```
-
-| Anti-Pattern | Why Bad | Better |
-|--------------|---------|--------|
-| Manual cleanup | Easy to forget | RAII/Drop |
-| `lazy_static!` | External dep, deprecated | `std::sync::OnceLock` (1.70+) |
-| Global mutable state | Thread unsafety | `OnceLock` or proper sync |
 
 ---
 
@@ -449,8 +403,6 @@ Docs: /// for public items, //! for module docs
 | OTel semantic conventions for attributes | M-LOG-STRUCTURED |
 | Redact sensitive data | M-LOG-STRUCTURED |
 
----
-
 ## Static Verification
 
 Recommended `Cargo.toml` lints:
@@ -471,95 +423,6 @@ style = { level = "warn", priority = -1 }
 suspicious = { level = "warn", priority = -1 }
 undocumented_unsafe_blocks = "warn"
 ```
-
----
-
-## Ecosystem Integration
-
-### Standard Crate Choices
-
-| Need | Crate |
-|------|-------|
-| Serialization | serde, serde_json |
-| Async runtime | tokio |
-| HTTP client | reqwest |
-| HTTP server | axum, actix-web |
-| Database | sqlx, diesel |
-| CLI parsing | clap |
-| Error handling (app) | anyhow |
-| Error handling (lib) | thiserror |
-| Logging | tracing |
-
-### Language Interop
-
-| Integration | Crate/Tool |
-|-------------|------------|
-| C/C++ → Rust | `bindgen` |
-| Rust → C | `cbindgen` |
-| Python ↔ Rust | `pyo3` |
-| Node.js ↔ Rust | `napi-rs` |
-| WebAssembly | `wasm-bindgen` |
-
-### Crate Selection Criteria
-
-| Criterion | Good Sign | Warning Sign |
-|-----------|-----------|--------------|
-| Maintenance | Recent commits | Years inactive |
-| Community | Active issues/PRs | No response |
-| Documentation | Examples, API docs | Minimal docs |
-| Stability | Semantic versioning | Frequent breaking |
-| Dependencies | Minimal, well-known | Heavy, obscure |
-
-### Deprecated → Modern Replacements
-
-| Deprecated | Better | Since |
-|------------|--------|-------|
-| `lazy_static!` | `std::sync::OnceLock` | Rust 1.70 |
-| `once_cell::Lazy` | `std::sync::LazyLock` | Rust 1.80 |
-| `std::sync::mpsc` | `crossbeam::channel` | — |
-| `std::sync::Mutex` | `parking_lot::Mutex` | — |
-| `failure`/`error-chain` | `thiserror`/`anyhow` | — |
-| `try!()` | `?` operator | Edition 2018 |
-| `extern crate` | Just `use` | Edition 2018 |
-| `#[macro_use]` | Explicit `use crate::macro_name!` | — |
-
----
-
-## Mental Models
-
-### Key Analogies
-
-| Concept | Mental Model | Analogy |
-|---------|--------------|---------|
-| Ownership | Unique key | Only one person has the house key |
-| Move | Key handover | Giving away your key |
-| `&T` | Lending for reading | Lending a book |
-| `&mut T` | Exclusive editing | Only you can edit the doc |
-| Lifetime `'a` | Valid scope | "Ticket valid until..." |
-| `Box<T>` | Heap pointer | Remote control to TV |
-| `Rc<T>` | Shared ownership | Multiple remotes, last turns off |
-| `Arc<T>` | Thread-safe Rc | Remotes from any room |
-
-### Coming From Other Languages
-
-| From | Key Shift |
-|------|-----------|
-| Java/C# | Values are owned, not references by default |
-| C/C++ | Compiler enforces safety rules |
-| Python/Go | No GC — deterministic destruction |
-| Functional | Mutability is safe via ownership |
-| JavaScript | No null — use `Option` instead |
-
-### Common Misconceptions
-
-| Wrong Model | Correct Model |
-|-------------|---------------|
-| GC cleans up → clone freely | Ownership = unique key transfer |
-| Multiple writers OK | Only one writer at a time (`&mut`) |
-| Lifetimes are GC | Compile-time validity scope |
-| Clone solves everything | Restructure ownership first |
-| Fight the borrow checker | Work with the compiler |
-| `unsafe` to avoid rules | Understand safe patterns first |
 
 ---
 
@@ -609,14 +472,7 @@ Before running `cargo build` or any build command, check if a `Makefile` exists.
 
 ### Permissions & Ownership
 
-Before building or deploying, check file permissions and ownership. Fix to match the project majority:
-
-```bash
-# Identify majority owner:group
-stat -c '%U:%G' * | sort | uniq -c | sort -rn | head -5
-# Fix if needed
-chown -R <user>:<group> .
-```
+Before building or deploying, check file permissions and ownership. Fix to match the project majority with `stat -c '%U:%G' * | sort | uniq -c | sort -rn | head -5`, then `chown -R <user>:<group> .` if needed.
 
 ### Temporary Files
 
@@ -626,7 +482,7 @@ chown -R <user>:<group> .
 | Final build artifacts | Project output dir (`target/`, `dist/`) |
 | Downloaded dependencies | Standard location (`~/.cargo/`) |
 
-**Exception:** If project instructions (CLAUDE.md, Makefile) specify a different temp location, follow those.
+**Exception:** If project instructions specify a different temp location, follow those.
 
 ### Test File Placement
 
@@ -637,3 +493,7 @@ chown -R <user>:<group> .
 | Permanent, integration tests | `tests/` directory (create if it doesn't exist) |
 | Specific instructions exist | Follow those |
 
+## Resources
+
+- **[Ecosystem Integration & Mental Models](resources/ecosystem-integration.md)** — Standard crate choices, language interop, crate selection criteria, deprecated-to-modern replacements, ownership analogies, and common misconceptions.
+- **[Domain Modeling](resources/domain-modeling.md)** — DDD-to-Rust pattern mapping (entities, aggregates, value objects, repositories), code examples, and common domain modeling mistakes.

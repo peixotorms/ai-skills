@@ -98,20 +98,7 @@ floor((0.1 + 0.7) * 10) // 7, not 8!
 
 ## OOP
 
-### Classes & Properties
-
-```php
-class User {
-    // Constructor promotion (PHP 8.0+)
-    public function __construct(
-        private readonly string $name,       // readonly (PHP 8.1+)
-        public int $age = 0,
-        public private(set) string $role = 'user', // asymmetric visibility (PHP 8.4+)
-    ) {}
-}
-
-$user = new User(name: 'Alice', age: 30); // named arguments
-```
+### Rules Summary
 
 | Rule | Detail |
 |------|--------|
@@ -121,183 +108,18 @@ $user = new User(name: 'Alice', age: 30); // named arguments
 | `private(set)` | Read public, write private (PHP 8.4+) |
 | Dynamic properties deprecated | PHP 8.2+ — declare all properties explicitly |
 | Reading uninitialized typed property | Throws Error |
-
-### Property Hooks (PHP 8.4+)
-
-```php
-class Temperature {
-    public float $celsius {
-        get => ($this->fahrenheit - 32) / 1.8;
-        set => $this->fahrenheit = ($value * 1.8) + 32;
-    }
-    public function __construct(private float $fahrenheit) {}
-}
-```
-
-### Interfaces & Abstract Classes
-
-```php
-interface Renderable {
-    public function render(): string;
-}
-
-abstract class Widget {
-    abstract protected function draw(): void;
-    public function display(): void { $this->draw(); }
-}
-
-class Button extends Widget implements Renderable, Clickable { }
-```
-
-| Rule | Detail |
-|------|--------|
 | Interface methods must be public | All of them |
 | Small interfaces | 1-3 methods — compose larger ones |
 | Abstract for shared behavior | Interfaces for contracts |
-| Avoid constructors in interfaces | Reduces flexibility |
 | `final` prevents extension | Use when inheritance isn't intended |
 | `final` class constants (8.1+) | Prevent override in children |
-
-### Traits
-
-```php
-trait Timestampable {
-    public DateTime $createdAt;
-    public DateTime $updatedAt;
-    public function touch(): void { $this->updatedAt = new DateTime(); }
-}
-
-class Post {
-    use Timestampable;
-    use TraitA, TraitB {
-        TraitA::method insteadof TraitB;   // resolve conflict
-        TraitB::method as protected aliased; // alias + change visibility
-    }
-}
-```
-
-| Rule | Detail |
-|------|--------|
-| Horizontal code reuse | Not a substitute for inheritance |
-| Precedence | Class > Trait > Parent |
-| Each class gets own static copies | Static properties not shared across classes |
-| Traits can have constants (8.2+) | Access via using class, not trait name |
-| Can require abstract methods | Force using class to implement |
-
-### Enumerations (PHP 8.1+)
-
-```php
-// Pure enum
-enum Status {
-    case Pending;
-    case Active;
-    case Inactive;
-}
-
-// Backed enum — stored as int or string
-enum Color: string {
-    case Red = '#FF0000';
-    case Green = '#00FF00';
-    case Blue = '#0000FF';
-}
-
-$color = Color::from('#FF0000');      // Color::Red or ValueError
-$color = Color::tryFrom('#FFFFFF');   // null (safe)
-echo $color->value;                   // '#FF0000'
-echo $color->name;                    // 'Red'
-
-// Methods and interfaces on enums
-enum Suit: string implements HasLabel {
-    case Hearts = 'H';
-    case Spades = 'S';
-
-    public function label(): string {
-        return match($this) {
-            self::Hearts => 'Hearts',
-            self::Spades => 'Spades',
-        };
-    }
-}
-```
-
-| Rule | Detail |
-|------|--------|
-| Use enums over class constants | Type-safe, exhaustive matching |
-| Back with `int` or `string` only | All cases must have explicit unique values |
+| Use enums over class constants | Type-safe, exhaustive matching (PHP 8.1+) |
 | `from()` throws on invalid | `tryFrom()` returns null |
-| Can have methods and implement interfaces | But no state (properties) |
-| Cases are singletons | Same instance every time |
-| Can use traits | But not traits with properties |
+| Enums can have methods and interfaces | But no state (properties) |
 
-### Visibility & Late Static Binding
-
-| Modifier | Access |
-|----------|--------|
-| `public` | Everywhere (default for interface methods) |
-| `protected` | Class + children |
-| `private` | Declaring class only — not inherited |
-| `public protected(set)` | Read public, write protected (PHP 8.4+) |
-| `public private(set)` | Read public, write only in class (PHP 8.4+) |
-
-```php
-// static:: resolves at runtime, self:: at compile time
-class ParentClass {
-    public static function create(): static { return new static(); }
-}
-class ChildClass extends ParentClass {}
-ChildClass::create(); // Returns ChildClass, not ParentClass
-```
-
-### Covariance & Contravariance (PHP 7.4+)
-
-| Direction | Rule | Example |
-|-----------|------|---------|
-| Covariant return | Child can return MORE specific | `Parent: Animal` -> `Child: Dog` |
-| Contravariant param | Child can accept LESS specific | `Parent: Dog` -> `Child: Animal` |
-
-### Magic Methods
-
-| Method | Triggered by |
-|--------|-------------|
-| `__construct()` / `__destruct()` | Object creation / destruction |
-| `__get($name)` / `__set($name, $val)` | Accessing undefined property |
-| `__call($name, $args)` / `__callStatic()` | Calling undefined method |
-| `__toString()` | String conversion |
-| `__invoke()` | Using object as function |
-| `__serialize()` / `__unserialize()` | Serialization (preferred over `__sleep`/`__wakeup`) |
-| `__clone()` | `clone $obj` (shallow copy by default) |
-| `__debugInfo()` | `var_dump()` output |
-
-| Rule | Detail |
-|------|--------|
-| `__construct` / `__destruct` / `__clone` | Can be any visibility; all others must be public |
-| Call `parent::__construct()` explicitly | Not called implicitly by PHP |
-| `__clone()` runs AFTER shallow copy | Use to deep-copy nested objects |
-| Exceptions in `__destruct` during shutdown | Cause fatal error |
+> Detailed OOP code examples (classes, interfaces, traits, enums, visibility, magic methods): see `resources/oop-patterns.md`
 
 ## Dependency Injection & SOLID
-
-### Dependency Injection
-
-```php
-// BAD: Hard-coded dependency — untestable
-class UserService {
-    private Database $db;
-    public function __construct() {
-        $this->db = new MySqlDatabase();  // tight coupling
-    }
-}
-
-// GOOD: Inject dependency via constructor
-class UserService {
-    public function __construct(private DatabaseInterface $db) {}
-}
-
-// Usage — easy to swap implementations and mock in tests
-$service = new UserService(new MySqlDatabase());
-$service = new UserService(new SqliteDatabase());  // same interface
-$service = new UserService($mockDb);               // testing
-```
 
 | Principle | Rule |
 |-----------|------|
@@ -314,6 +136,8 @@ $service = new UserService($mockDb);               // testing
 | DI container ≠ DI | Containers are optional convenience; DI is the pattern |
 | Avoid Service Locator | Hiding dependencies inside a container = anti-pattern |
 | `final` by default | Mark classes `final` unless designed for extension |
+
+> DI code examples and namespace patterns: see `resources/oop-patterns.md`
 
 ## PSR Standards & Composer
 
@@ -354,177 +178,24 @@ require 'vendor/autoload.php';
 | `composer install` in production | Never `composer update` — use lock file |
 | `--no-dev` in production | Exclude dev dependencies |
 | `--optimize-autoloader` / `-o` | Converts PSR-4/PSR-0 to classmap for speed |
-| PSR-4 autoloading | Namespace `App\` → directory `src/` |
+| PSR-4 autoloading | Namespace `App\` -> directory `src/` |
 | `composer dump-autoload -o` | Regenerate optimized autoload after changes |
 | Security auditing | `composer audit` checks for known vulnerabilities |
 
 ## Modern PHP 8.x Patterns
 
-### Match Expression (PHP 8.0+)
+Key features by version:
 
-```php
-$label = match($status) {
-    Status::Active => 'Active',
-    Status::Pending, Status::Inactive => 'Not active',
-    default => throw new UnexpectedValueException(),
-};
-// Uses ===, returns value, no fall-through, throws UnhandledMatchError if no match
-```
+| Version | Key Features |
+|---------|-------------|
+| 8.0 | Match, named args, union types, constructor promotion, nullsafe `?->`, attributes |
+| 8.1 | Enums, readonly, fibers, intersection types, `never`, first-class callables |
+| 8.2 | Readonly classes, DNF types, `true`/`false`/`null` types, trait constants |
+| 8.3 | Typed class constants, `#[Override]`, `json_validate()` |
+| 8.4 | Property hooks, asymmetric visibility, `#[Deprecated]`, lazy objects |
+| 8.5 | Pipe operator `\|>`, `#[NoDiscard]`, `(void)` cast |
 
-### Named Arguments & Nullsafe (PHP 8.0+)
-
-```php
-// Named arguments — any order, skip defaults
-array_slice(array: $arr, offset: 2, length: 5, preserve_keys: true);
-
-// Nullsafe — short-circuits to null
-$city = $user?->getAddress()?->getCity()?->getName();
-```
-
-### Readonly (PHP 8.1+ properties, 8.2+ classes)
-
-```php
-// Readonly property
-class User {
-    public function __construct(public readonly string $name) {}
-}
-
-// Readonly class — ALL properties are readonly
-readonly class Point {
-    public function __construct(public float $x, public float $y) {}
-}
-```
-
-### Override Attribute (PHP 8.3+)
-
-```php
-class Child extends ParentClass {
-    #[Override]
-    public function process(): void { }  // Error if parent doesn't have process()
-}
-```
-
-### Pipe Operator (PHP 8.5+)
-
-```php
-$result = $input |> trim(...) |> strtolower(...) |> ucfirst(...);
-```
-
-### Deprecated & NoDiscard Attributes (PHP 8.4+/8.5+)
-
-```php
-#[Deprecated('Use newMethod() instead', since: '2.0')]
-public function oldMethod(): void { }
-
-#[NoDiscard]
-function validate(string $data): bool { }
-(void) validate($data); // explicitly discard
-```
-
-## Functions
-
-### Arrow Functions & Closures
-
-```php
-// Arrow function — single expression, auto-captures by value
-$doubled = array_map(fn($n) => $n * 2, $numbers);
-
-// Traditional closure — captures explicitly
-$tax = 0.1;
-$withTax = array_map(function($price) use ($tax) {
-    return $price * (1 + $tax);
-}, $prices);
-
-// First-class callable syntax (PHP 8.1+)
-$fn = strlen(...);
-$method = $obj->method(...);
-$static = MyClass::method(...);
-```
-
-### Variadic & Spread
-
-```php
-function sum(int ...$nums): int { return array_sum($nums); }
-sum(1, 2, 3);
-sum(...[1, 2, 3]);  // spread
-```
-
-### Generators
-
-```php
-function readLines(string $file): Generator {
-    $f = fopen($file, 'r');
-    try {
-        while ($line = fgets($f)) { yield trim($line); }
-    } finally {
-        fclose($f);
-    }
-}
-
-// Delegation
-function combined(): Generator {
-    yield from range(1, 5);
-    yield from ['a', 'b', 'c'];
-}
-
-// Associative yields
-function metadata(): Generator {
-    yield 'name' => 'Alice';
-    yield 'age' => 30;
-}
-```
-
-| Rule | Detail |
-|------|--------|
-| Memory-efficient | Process large datasets without loading into memory |
-| State preserved between yields | Execution pauses and resumes |
-| `yield from` delegates | Preserves keys — watch for overwrites |
-| Return value via `getReturn()` | Available after generator completes |
-
-### Fibers (PHP 8.1+)
-
-```php
-$fiber = new Fiber(function(): string {
-    $value = Fiber::suspend('paused');
-    return "got: $value";
-});
-$result = $fiber->start();      // 'paused'
-$fiber->resume('hello');
-$fiber->getReturn();            // 'got: hello'
-```
-
-| Fibers vs Generators | Detail |
-|---------------------|--------|
-| Generators | Stackless, yield only in generator function |
-| Fibers | Full-stack suspension, suspend from anywhere in call chain |
-
-## Namespaces
-
-```php
-namespace App\Models;
-
-use App\Contracts\Renderable;
-use App\Services\{UserService, AuthService};  // group imports (PHP 7.0+)
-use function App\Helpers\format_date;
-use const App\Config\MAX_RETRIES;
-```
-
-| Rule | Detail |
-|------|--------|
-| First statement (except `declare`) | Must come before any code |
-| Per-file scope | Imports don't transfer to included files |
-| Functions/constants fall back to global | If not found in namespace |
-| Dynamic names bypass imports | `new $className()` ignores `use` statements |
-| No whitespace before `namespace` | After `<?php` tag |
-
-### Name Resolution
-
-| Form | Resolution |
-|------|-----------|
-| `\Full\Path` | Fully qualified — resolves as-is |
-| `Imported\Rest` | First segment checked against imports |
-| `Unqualified` | Checked against import table, then current namespace |
-| `namespace\Foo` | Current namespace prepended |
+> Detailed code examples for all features, functions, generators, fibers, and attributes: see `resources/modern-php.md`
 
 ## Error Handling
 
@@ -560,25 +231,6 @@ try {
 | `display_errors` | `On` | `Off` |
 | `log_errors` | `On` | `On` |
 | `error_log` | stderr | syslog or file |
-
-## Attributes (PHP 8.0+)
-
-```php
-#[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-class Route {
-    public function __construct(
-        public string $path,
-        public string $method = 'GET',
-    ) {}
-}
-
-#[Route('/api/users', method: 'POST')]
-public function createUser(): Response { }
-
-// Read via Reflection
-$attrs = (new ReflectionMethod($class, $method))->getAttributes(Route::class);
-$route = $attrs[0]->newInstance();
-```
 
 ## Arrays & Strings
 
@@ -665,98 +317,17 @@ $data = json_decode($json, true, 512, JSON_BIGINT_AS_STRING);
 
 ## Testing
 
-```php
-class UserTest extends TestCase {
-    public function testCreateUser(): void {
-        $user = new User('Alice', 30);
-        $this->assertSame('Alice', $user->getName());
-    }
-
-    #[DataProvider('ageProvider')]
-    public function testAgeValidation(int $age, bool $valid): void {
-        if (!$valid) {
-            $this->expectException(\InvalidArgumentException::class);
-        }
-        new User('Test', $age);
-    }
-
-    public static function ageProvider(): array {
-        return [
-            'valid' => [25, true],
-            'zero' => [0, false],
-            'negative' => [-1, false],
-        ];
-    }
-}
-```
-
 | Rule | Detail |
 |------|--------|
 | `assertSame()` over `assertEquals()` | Strict comparison (type + value) |
 | Data providers for table-driven tests | `#[DataProvider('method')]` attribute |
 | `expectException()` before the call | Not after |
 | Test naming | `*Test.php`, method `test*` |
-| `t.Helper()` equivalent | N/A — PHP traces show full stack |
-
-### Static Analysis
-
-| Tool | Usage |
-|------|-------|
-| PHPStan | `composer require --dev phpstan/phpstan` — levels 0–9 strictness, start low and increase |
-| Psalm | `composer require --dev vimeo/psalm` — similar to PHPStan, adds taint analysis for security |
-
-```bash
-# Run in CI and locally before commits
-vendor/bin/phpstan analyse src/ --level=6
-vendor/bin/psalm --show-info=false
-```
-
-| Rule | Detail |
-|------|--------|
-| Baseline file for legacy code | `phpstan.neon` with `ignoreErrors`, reduce over time |
-| Level progression | Start level 0, increase one level per sprint/cycle |
+| PHPStan | Levels 0-9 strictness; start low, increase per sprint |
+| Psalm | Adds taint analysis for security |
 | CI gate | Fail build on any new error — never ignore regressions |
-| Psalm taint analysis | Detects SQL injection, XSS flows automatically — see `php-security` |
 
----
-
-## PHP Version Migration Reference
-
-### PHP 8.0
-
-**Adopt:** named args, union types, match, constructor promotion, nullsafe `?->`, attributes, `throw` as expression, `static` return type, `str_contains()`, `str_starts_with()`, `str_ends_with()`
-
-**Breaking:** `0 == "a"` now false; internal functions throw TypeError on wrong types; private methods not inherited; `\Stringable` interface auto-implemented
-
-### PHP 8.1
-
-**Adopt:** enums, readonly properties, fibers, intersection types, `never` type, first-class callables `fn(...)`, `new` in initializers, `array_is_list()`, `final` class constants
-
-**Stop using:** passing `null` to non-nullable internals; implicit float-to-int; `Serializable` without `__serialize()`
-
-### PHP 8.2
-
-**Adopt:** readonly classes, DNF types `(A&B)|C`, `true`/`false`/`null` as standalone types, trait constants, `Random\Randomizer`
-
-**Stop using:** dynamic properties; `${var}` interpolation; `utf8_encode()`/`utf8_decode()`
-
-### PHP 8.3
-
-**Adopt:** typed class constants, `#[Override]`, dynamic constant fetch `C::{$name}`, `json_validate()`, `str_increment()`/`str_decrement()`
-
-**Stop using:** `get_class()` without arg (use `$obj::class`); string increment on non-alphanumeric
-
-### PHP 8.4
-
-**Adopt:** property hooks, asymmetric visibility `private(set)`, `#[Deprecated]` attribute, lazy objects, `new` without parens in chain, `mb_trim()`/`mb_ltrim()`/`mb_rtrim()`
-
-**Stop using:** implicit nullable `f(Type $x = null)` (use `?Type`); `trigger_error(E_USER_ERROR)` (use exceptions)
-
-### PHP 8.5
-
-**Adopt:** pipe operator `|>`, `#[NoDiscard]`, `(void)` cast, closures in constants, attributes on constants, `#[Override]` on properties
-
-**Stop using:** `(boolean)`/`(integer)`/`(double)` casts; backtick operator; `__sleep()`/`__wakeup()`
+> Full testing examples, static analysis setup, and version migration reference: see `resources/testing-migration.md`
 
 ---
 
@@ -821,3 +392,13 @@ chown -R <user>:<group> .
 | Implicit nullable param | Explicit `?Type` |
 | `(boolean)` cast | `(bool)` |
 | `json_last_error()` checking | `JSON_THROW_ON_ERROR` flag |
+
+---
+
+## Resources
+
+Detailed code examples and extended references are organized in resource files:
+
+- **`resources/oop-patterns.md`** — OOP detailed code (classes, interfaces, traits, enums, visibility, magic methods), dependency injection examples, and namespace patterns
+- **`resources/modern-php.md`** — Modern PHP 8.x feature code (match, named args, readonly, pipe operator, deprecated/nodiscard), functions (arrow functions, closures, variadic, generators, fibers), and attributes
+- **`resources/testing-migration.md`** — Testing examples with PHPUnit and data providers, static analysis setup (PHPStan, Psalm), and PHP version migration reference (8.0-8.5)
