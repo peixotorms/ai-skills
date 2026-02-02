@@ -1,0 +1,67 @@
+# Filter
+
+Filter is a group of radio buttons. Choosing one of the options will hide the others and shows a reset button next to the chosen option.
+
+## Class Reference
+
+| Class | Description | Category |
+|-------|-------------|----------|
+| `filter` | For a HTML <form> or a <div> element that includes radio buttons for filtering items | component |
+| `filter-reset` | An alternative to the reset button if you can't use a HTML form | part |
+
+## Examples
+
+### Filter using HTML form, radio buttons and reset button
+#### A HTML from for filtering items
+
+<form class="filter">
+  <input class="btn btn-square" type="reset" value="×"/>
+  <input class="btn" type="radio" name="frameworks" aria-label="Svelte"/>
+  <input class="btn" type="radio" name="frameworks" aria-label="Vue"/>
+  <input class="btn" type="radio" name="frameworks" aria-label="React"/>
+</form>
+
+```html
+<form class="filter">
+  <input class="btn btn-square" type="reset" value="×"/>
+  <input class="btn" type="radio" name="frameworks" aria-label="Svelte"/>
+  <input class="btn" type="radio" name="frameworks" aria-label="Vue"/>
+  <input class="btn" type="radio" name="frameworks" aria-label="React"/>
+</form>
+```
+### Filter without HTML form
+#### Use this if you can't use a HTML form for some reason
+
+<div class="filter">
+  <input class="btn filter-reset" type="radio" name="metaframeworks" aria-label="All"/>
+  <input class="btn" type="radio" name="metaframeworks" aria-label="Sveltekit"/>
+  <input class="btn" type="radio" name="metaframeworks" aria-label="Nuxt"/>
+  <input class="btn" type="radio" name="metaframeworks" aria-label="Next.js"/>
+</div>
+
+```html
+<div class="filter">
+  <input class="btn filter-reset" type="radio" name="metaframeworks" aria-label="All"/>
+  <input class="btn" type="radio" name="metaframeworks" aria-label="Sveltekit"/>
+  <input class="btn" type="radio" name="metaframeworks" aria-label="Nuxt"/>
+  <input class="btn" type="radio" name="metaframeworks" aria-label="Next.js"/>
+</div>
+```
+### Filter using HTML form, checkboxes, and a reset button
+#### For having multiple choices, use checkboxes. It doesn't need the filter class name.
+
+<form>
+  <input class="btn" type="checkbox" name="frameworks" aria-label="Svelte"/>
+  <input class="btn" type="checkbox" name="frameworks" aria-label="Vue"/>
+  <input class="btn" type="checkbox" name="frameworks" aria-label="React"/>
+  <input class="btn btn-square" type="reset" value="×"/>
+</form>
+
+```html
+<form>
+  <input class="btn" type="checkbox" name="frameworks" aria-label="Svelte"/>
+  <input class="btn" type="checkbox" name="frameworks" aria-label="Vue"/>
+  <input class="btn" type="checkbox" name="frameworks" aria-label="React"/>
+  <input class="btn btn-square" type="reset" value="×"/>
+</form>
+```

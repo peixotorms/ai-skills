@@ -56,6 +56,16 @@
       },
       "source": "./plugins/compliance-skills",
       "category": "development"
+    },
+    {
+      "name": "frontend-skills",
+      "description": "Frontend development guidelines — 11 skills covering Tailwind CSS patterns, UI components, layouts, ecommerce, marketing, dashboard/CRUD, plus MCP-powered component libraries: HyperUI (481 HTML components), DaisyUI, FlyonUI, and HeadlessUI (React + Vue).",
+      "version": "2.0.0",
+      "author": {
+        "name": "Raul P."
+      },
+      "source": "./plugins/frontend-skills",
+      "category": "development"
     }
   ]
 }
