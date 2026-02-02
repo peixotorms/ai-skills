@@ -419,6 +419,133 @@ Use this class to hide content visually while keeping it accessible to screen re
 </html>
 ```
 
+## 14. Tailwind CSS Accessibility Patterns
+
+When using Tailwind CSS, leverage built-in utilities and variants for accessible implementations.
+
+### 14.1 Screen-Reader-Only Content
+
+Tailwind provides `sr-only` and `not-sr-only` utilities:
+
+```html
+<!-- Hidden visually, announced by screen readers -->
+<span class="sr-only">Edit profile for John Smith</span>
+
+<!-- Skip navigation link: hidden until focused -->
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50
+   focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium">
+  Skip to main content
+</a>
+
+<!-- Icon button with accessible label -->
+<button class="p-2 rounded-md hover:bg-gray-100">
+  <svg aria-hidden="true" class="size-5"><!-- icon --></svg>
+  <span class="sr-only">Close menu</span>
+</button>
+```
+
+### 14.2 Focus Indicators
+
+| Pattern | Tailwind Classes | WCAG SC |
+|---|---|---|
+| Keyboard-only focus ring | `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600` | 2.4.7 |
+| Always-visible focus | `focus:ring-2 focus:ring-indigo-600` | 2.4.7 |
+| Remove default + replace | `outline-none focus-visible:ring-2 focus-visible:ring-indigo-600` | 2.4.7 |
+| Never remove without replacement | Do NOT use `outline-none` alone | 2.4.7 |
+| Forced colors focus | `forced-colors:outline forced-colors:outline-[Highlight]` | 1.4.11 |
+
+### 14.3 User Preference Variants
+
+| Variant | Purpose | WCAG SC |
+|---|---|---|
+| `motion-safe:` | Apply animations only when user allows motion | 2.3.3 |
+| `motion-reduce:` | Override/remove animations for reduced-motion preference | 2.3.3 |
+| `contrast-more:` | Enhance contrast for high-contrast preference | 1.4.3 |
+| `contrast-less:` | Reduce contrast for sensitivity (rare) | — |
+| `forced-colors:` | Adapt for Windows High Contrast Mode | 1.4.11 |
+| `prefers-color-scheme` (via `dark:`) | Respect OS dark mode setting | 1.4.3 |
+
+```html
+<!-- Reduced motion: disable transitions -->
+<div class="transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none">
+
+<!-- High contrast: add borders -->
+<button class="bg-indigo-600 text-white contrast-more:border-2 contrast-more:border-indigo-900">
+
+<!-- Forced colors: ensure visibility -->
+<div class="bg-gray-100 forced-colors:border forced-colors:border-[ButtonText]">
+```
+
+### 14.4 Touch Target Sizing
+
+```html
+<!-- Minimum 44x44px via padding expansion -->
+<button class="min-h-[44px] min-w-[44px] p-2">
+  <svg class="size-5" aria-hidden="true"><!-- icon --></svg>
+  <span class="sr-only">Action</span>
+</button>
+
+<!-- Input device adaptation (v4.1) -->
+<button class="p-2 pointer-coarse:p-3 pointer-coarse:min-h-[48px]">
+  Tap-friendly on touch, compact on mouse
+</button>
+```
+
+### 14.5 ARIA Variants in Tailwind
+
+Tailwind provides built-in ARIA state variants:
+
+| Variant | Targets | Use Case |
+|---|---|---|
+| `aria-checked:` | `aria-checked="true"` | Custom checkboxes, toggles |
+| `aria-disabled:` | `aria-disabled="true"` | Disabled interactive elements |
+| `aria-expanded:` | `aria-expanded="true"` | Accordions, dropdowns |
+| `aria-hidden:` | `aria-hidden="true"` | Hidden content styling |
+| `aria-pressed:` | `aria-pressed="true"` | Toggle buttons |
+| `aria-selected:` | `aria-selected="true"` | Tab panels, list selections |
+| `aria-required:` | `aria-required="true"` | Required form fields |
+| `group-aria-*:` | Parent ARIA state | Child styling based on parent state |
+| `peer-aria-*:` | Sibling ARIA state | Adjacent element styling |
+
+```html
+<!-- Toggle button with ARIA styling -->
+<button aria-pressed="false" class="bg-gray-200 aria-pressed:bg-indigo-600">
+
+<!-- Accordion with group ARIA -->
+<div class="group" aria-expanded="false">
+  <svg class="transition group-aria-expanded:rotate-180"><!-- chevron --></svg>
+</div>
+```
+
+### 14.6 Form Validation with Post-Interaction States (v4.1)
+
+```html
+<!-- Only show validation after user interaction, not on page load -->
+<input type="email" required
+  class="border border-gray-300
+         user-valid:border-green-500 user-valid:ring-green-500
+         user-invalid:border-red-500 user-invalid:ring-red-500">
+
+<!-- Better than invalid: which fires immediately on required empty fields -->
+```
+
+### 14.7 HeadlessUI Accessible Components
+
+When building interactive widgets with Tailwind CSS, use HeadlessUI for built-in accessibility:
+
+| Component | Built-in A11y | What It Handles |
+|---|---|---|
+| Dialog | Focus trap, inert background, Escape close, `aria-modal`, `aria-labelledby` | SC 2.1.2, 2.4.3, 4.1.2 |
+| Disclosure | `aria-expanded`, keyboard toggle | SC 4.1.2 |
+| Listbox | `aria-selected`, arrow key navigation, type-ahead | SC 4.1.2, 2.1.1 |
+| Combobox | `aria-activedescendant`, `aria-autocomplete`, arrow keys | SC 4.1.2, 2.1.1 |
+| Menu | `aria-haspopup`, `role="menu"`, arrow keys, type-ahead | SC 4.1.2, 2.1.1 |
+| Switch | `role="switch"`, `aria-checked`, Space toggle | SC 4.1.2, 2.1.1 |
+| RadioGroup | Arrow key navigation, `aria-checked` | SC 4.1.2, 2.1.1 |
+| Tabs | `role="tablist"`, `aria-selected`, arrow keys | SC 4.1.2, 2.1.1 |
+
+Using HeadlessUI is strongly preferred over building custom interactive widgets. It eliminates the most common accessibility mistakes (missing focus traps, keyboard handling, ARIA states).
+
 ## Resources
 
 Detailed code examples for each topic area:
